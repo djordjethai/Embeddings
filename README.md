@@ -1,149 +1,50 @@
-# OpenAI Fine-Tuning Toolkit
+# Streamlit Utilities and Callbacks - `priprema.py`
 
-Welcome to the OpenAI Fine-Tuning Toolkit! This repository contains a collection of Python scripts (.py files) designed to streamline and simplify the fine-tuning process for OpenAI's GPT-3.5 Turbo model. Whether you're looking to fine-tune the model for specific tasks, monitor job progress, or manage fine-tuned models, this toolkit has you covered.
-
-## Overview
-
-Fine-tuning the GPT-3.5 Turbo model allows you to customize it for various natural language understanding and generation tasks. OpenAI's fine-tuning capabilities empower you to create chatbots, provide recommendations, answer questions, and more, all tailored to your specific application.
-
-This toolkit includes several Python scripts, each serving a specific purpose in the fine-tuning workflow. Below is an overview of the key components:
-
-1. **Data Preparation:** Ensure that your training data is in the right format, within token limits, and ready for fine-tuning.
-
-2. **Model Creation:** Upload your data, initiate fine-tuning, and specify model details, such as the name and organization.
-
-3. **Job Management:** Keep track of fine-tuning jobs, retrieve job states, cancel ongoing jobs, and list events associated with a particular job.
-
-4. **Model Deletion:** Delete fine-tuned models that are no longer needed.
-
-5. **Model Listing:** List available models for reference.
-
-## Getting Started
-
-To get started with fine-tuning using this toolkit, follow these steps:
-
-1. Clone this repository to your local machine.
-
-2. Set up your OpenAI API key by defining it as an environment variable (`OPENAI_API_KEY`). You can obtain an API key by signing up on the OpenAI platform.
-
-3. Install the required Python dependencies specified in each .py file.
-
-4. Navigate to the specific .py file that corresponds to the task you want to perform and follow the instructions provided.
-
-5. Refer to the individual .py file descriptions for detailed usage guidelines.
-
-## Script Descriptions
-
-Below, you'll find descriptions and usage guidelines for each Python script included in this toolkit:
-
----
-
-Feel free to explore each script based on your specific fine-tuning needs. Whether you're new to fine-tuning or an experienced user, this toolkit aims to simplify the process and make it accessible to all.
-
-For additional information and updates, please refer to the [OpenAI documentation](https://beta.openai.com/docs/).
-
----
-
-## Fine-Tuning GPT-3.5 Turbo Model - `Fine_tuning_turbo.py`
-
-This Python script is designed to prepare and run fine-tuning for the GPT-3.5 Turbo model provided by OpenAI. It is integrated into a Streamlit web application for ease of use. The script performs various tasks related to fine-tuning, including data verification, model creation, monitoring job status, and more.
-
-### Features and Functionality:
-
-1. **Data Verification:**
-   - Allows users to upload a JSONL file containing question-answer pairs for data verification.
-   - Checks the data structure to ensure it complies with the Chat completions message structure.
-   - Verifies the token count to ensure it does not exceed the 4096 token limit.
-   - Provides pricing and default epoch estimates based on the dataset.
-
-2. **Create Fine-Tuned Model:**
-   - Users can upload a JSONL file for creating a fine-tuned model.
-   - Validates the uploaded training and validation data files.
-   - Allows users to specify a suffix for the model's name.
-   - Initiates the fine-tuning process using the specified data and model.
-
-3. **List Fine-Tuning Jobs:**
-   - Displays a list of up to 10 fine-tuning jobs.
-
-4. **Retrieve Fine-Tuning Job State:**
-   - Allows users to retrieve the state of a specific fine-tuning job using its ID.
-
-5. **Cancel Fine-Tuning Job:**
-   - Provides an option to cancel a fine-tuning job by specifying its ID.
-
-6. **List Events from Fine-Tuning Job:**
-   - Lists up to 50 events from a specific fine-tuning job.
-
-7. **Delete Fine-Tuned Model:**
-   - Allows users to delete a fine-tuned model using its ID (requires ownership privileges).
-
-8. **List Available Models:**
-   - Lists available models for reference.
-
-### How to Use:
-
-1. Clone this repository to your local machine.
-2. Set up your OpenAI API key by defining it as an environment variable (`OPENAI_API_KEY`).
-3. Install the required dependencies specified in the code.
-4. Run the script, and it will launch a Streamlit web application.
-5. Follow the Streamlit interface to perform various fine-tuning tasks.
-
-Make sure to replace `mojafunkcija`, `positive_login`, and other placeholders with relevant functions or libraries according to your project's structure.
-
-For additional information and updates, please refer to the [OpenAI documentation](https://beta.openai.com/docs/).
-## Script Details
-
-- **Author**: Positive
-- **Date**: 07.09.2023
-- **License**: MIT
----
-
-# Data Preparation for Fine-Tuning - `priprema_podataka_za_ft.py`
-
-This Python script, `priprema_podataka_za_ft.py`, is part of the OpenAI Fine-Tuning Toolkit. It serves a crucial role in the fine-tuning process for OpenAI's GPT-3.5 Turbo model by preparing the training and verification data files.
+This Python script, `priprema.py`, is a collection of Streamlit utilities and callback functions designed to enhance your Streamlit applications. These utilities and callbacks simplify common tasks, such as handling user interactions, displaying information, and integrating with other libraries.
 
 ## Overview
 
-Fine-tuning a language model like GPT-3.5 Turbo requires well-structured and curated datasets. This script streamlines the data preparation process, allowing you to:
+Streamlit is a powerful tool for creating interactive web applications with minimal effort. However, as your applications grow in complexity, you may need additional functionality and customization. This script serves as a utility library for enhancing your Streamlit projects.
 
-- Upload a file containing questions, which may have been generated using the ChatGPT model or obtained from various sources.
-- Optionally, upload a source file if the answers need to be based on specific text.
-- Define a system message that describes the model's behavior and style, including its name.
-- Generate answers to questions using the specified system message and data.
-- Save the answers to an output file.
-- Create a JSONL file for fine-tuning with user and assistant messages.
+## Key Features
+
+Here are some key features and functions provided by this script:
+
+- **Streamlit Style Customization**: Customize the style of your Streamlit app, including hiding the main menu and footer for a cleaner interface.
+
+- **Positive Authentication**: Implement user authentication using the `streamlit-authenticator` library. Control access levels and user privileges based on predefined credentials.
+
+- **Text File Handling**: Read text files from your local file system, which can be useful for loading data or configurations.
+
+- **Streamlit Redirect**: Redirect the standard output of your Python code to Streamlit's interface. This can be handy for displaying real-time updates or logs.
+
+- **Token Length Calculator**: Calculate the token length of a given text using the `tiktoken` library.
+
+- **Pinecone Statistics**: Display statistics and information about a Pinecone index for embedding retrieval.
+
+- **Data Flattening**: Flatten nested dictionaries into a more accessible format.
+
+- **Streamlit Callbacks**: Implement Streamlit callbacks for handling user interactions and providing dynamic updates.
 
 ## Getting Started
 
-To utilize this script and prepare your data for fine-tuning, follow these steps:
+To use this script in your Streamlit application, follow these steps:
 
-1. Clone this repository to your local machine.
+1. Clone this repository or download the `priprema.py` file.
 
-2. Set up your OpenAI API key by defining it as an environment variable (`OPENAI_API_KEY`). Ensure you have an API key from OpenAI's platform.
+2. Import the necessary functions and classes from the script into your Streamlit application.
 
-3. Install the required Python dependencies specified in the script.
+3. Utilize these utilities and callbacks to enhance your app's functionality.
 
-4. Run the script, and it will launch a Streamlit web application.
-
-5. Follow the Streamlit interface to perform data preparation for fine-tuning.
+4. Customize the script as needed to suit your specific requirements.
 
 ## Usage Guidelines
 
-1. Upload a file containing questions that require answers.
+Refer to the documentation within the script and the comments provided for each function to understand how to use them effectively. You can also modify and extend these utilities to fit your project's needs.
 
-2. Optionally, upload a source file if answers should be based on specific text.
+For additional information and updates, please refer to the [Streamlit documentation](https://docs.streamlit.io/) and the relevant libraries used in this script.
 
-3. Define a system message that sets the behavior and style of the model, including its name.
-
-4. Click the "Submit" button to generate answers to questions.
-
-5. Review and, if necessary, make corrections to the generated answers.
-
-6. The script saves the answers to an output file, which you can later use for fine-tuning.
-
-7. A JSONL file is created, incorporating user and assistant messages, facilitating the fine-tuning process.
-
-8. The processed data is saved and ready for use in training a fine-tuned model.
+---
 
 ## Script Details
 
@@ -151,6 +52,50 @@ To utilize this script and prepare your data for fine-tuning, follow these steps
 - **Date**: 07.09.2023
 - **License**: MIT
 
-For additional information and updates, please refer to the [OpenAI documentation](https://beta.openai.com/docs/).
-
 ---
+
+# Pinecone Namespace Removal - `pinecone_utility.py`
+
+This script is designed to assist with the removal of a specified namespace from a Pinecone index. Pinecone is a real-time vector database that allows efficient storage and retrieval of embeddings, and this script provides a convenient way to manage the contents of a Pinecone index.
+
+## Overview
+
+In certain scenarios, you may need to clean up your Pinecone index by removing specific namespaces. Namespaces are useful for organizing and isolating data within an index, but there may come a time when you want to remove data associated with a particular namespace. This script streamlines that process.
+
+## Key Features
+
+Here are some key features and functionalities offered by this script:
+
+- **Namespace Removal**: Remove a specified namespace from a Pinecone index, effectively deleting all associated data.
+- **Filtering Options**: Optionally, you can apply a filter to select specific records within the namespace to remove, making the removal process more targeted.
+- **Streamlit Interface**: The script provides a user-friendly Streamlit interface for easy interaction and execution.
+
+## Getting Started
+
+To use this script effectively, follow these steps:
+
+1. Ensure you have Pinecone credentials set up with the required API key and environment variables.
+
+2. Clone or download the script to your local machine.
+
+3. Customize the script by specifying the target Pinecone index, the namespace to remove, and an optional filter for more precise removal.
+
+4. Run the script using Streamlit to initiate the namespace removal process.
+
+## Usage Guidelines
+
+- **Input Fields**: Fill in the required input fields, including the Pinecone index name, the namespace to remove, and an optional filter based on metadata. You can specify a filter to remove only certain records from the namespace.
+
+- **Confirmation**: The script will prompt you to confirm whether you want to proceed with the namespace removal. Ensure that you want to delete the specified namespace before confirming.
+
+- **Execution**: Upon confirmation, the script will execute the removal process. All data associated with the specified namespace will be deleted from the Pinecone index.
+
+- **Statistics**: After the removal process is complete, the script provides statistics and insights about the Pinecone index to give you an overview of the changes.
+
+## Script Details
+
+- **Author**: Positive
+- **Date**: 07.09.2023
+- **License**: MIT
+
+Please note that this script is designed for use with Pinecone, and it's essential to have Pinecone credentials and permissions set up correctly.

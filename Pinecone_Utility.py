@@ -3,7 +3,7 @@ import pinecone
 import sys
 import os
 import time
-from mojafunkcja import pinecone_stats, st_style
+from mojafunkcija import pinecone_stats, st_style
 
 
 st_style()
@@ -15,14 +15,13 @@ def main():
     with col1:
         with st.form(key='my_form', clear_on_submit=True):
 
-            index_name = st.text_input("Unesi index : ")
-            namespace = st.text_input("Unesi namespace : ")
-            moj_filter = st.text_input(
-                "Unesi filter za source (prazno za sve) : ")
+            index_name = st.text_input("Unesi index : ", help = "Unesi ime indexa koji zelis da obrises")
+            namespace = st.text_input("Unesi namespace : ", help = "Unesi namespace koji zelis da obrises")
+            moj_filter = st.text_input("Unesi filter za source (prazno za sve) : ", help = "Unesi filter za source (prazno za sve) : ")
             nastavak = st.radio(
-                f"Da li da uklonim namespace {namespace} iz indexa {index_name}",  ('Da', 'Ne'))
+                f"Da li da uklonim namespace {namespace} iz indexa {index_name}",  ('Da', 'Ne'), help = "Da li da uklonim namespace iz indexa")
 
-            submit_button = st.form_submit_button(label='Submit')
+            submit_button = st.form_submit_button(label='Submit', help="Submit dugme pokrece uklanjanje namespace iz indexa")
             if submit_button:
                 if not nastavak == "Da":
                     placeholder = st.empty()
