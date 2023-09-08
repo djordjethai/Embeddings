@@ -7,7 +7,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.document_loaders import UnstructuredFileLoader, UnstructuredPDFLoader
 import os
 import streamlit as st
-from mojafunkcija import st_style, pinecone_stats, positive_login
+from myfunc.mojafunkcija import st_style, pinecone_stats, positive_login
 
 
 

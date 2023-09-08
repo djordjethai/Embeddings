@@ -3,7 +3,7 @@ import pinecone
 import sys
 import os
 import time
-from mojafunkcija import pinecone_stats, st_style
+from myfunc.mojafunkcija import pinecone_stats, st_style
 
 
 st_style()
