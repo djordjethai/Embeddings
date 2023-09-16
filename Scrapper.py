@@ -14,13 +14,15 @@ import pinecone
 from bs4 import BeautifulSoup
 import sys
 import streamlit as st
-from mojafunkcja import st_style
-from Priprema import def_chunk
+from myfunc.mojafunkcija import st_style
 import json
+from langchain.chat_models import ChatOpenAI
+from langchain.chains import create_extraction_chain
 
 st_style()
 
 
+# Define a function to scrape a given URL
 def scrape(url: str):
     global headers, sajt, err_log, tiktoken_len, vrsta
     # Send a GET request to the URL
@@ -77,7 +79,7 @@ def scrape(url: str):
                         st.error(err_log)
                         sys.exit()
                 except Exception as e:
-                    err_log += f"Error while discivering page content\n"
+                    err_log += f"Error while discovering page content\n"
                     return None
 
     # return as json
@@ -85,8 +87,49 @@ def scrape(url: str):
 
 
 # Now you can work with the parsed content using Beautiful Soup
+def add_schema_data(line):
+    openai_api_key = os.getenv("OPENAI_API_KEY")
+
+    # Create an instance of ChatOpenAI
+    llm = ChatOpenAI(temperature=0, model="gpt-4", openai_api_key=openai_api_key)
+
+    # mogu da se definisu bilo koji delovi kao JSON schema
+
+    schema = {
+        "properties": {
+            "title": {"type": "string"},
+            "keyword": {"type": "string"},
+            "text": {"type": "string"},
+        },
+        "required": ["title", "keyword", "text"],
+    }
+
+    # moze da se ucita bilo koji fajl (ili dokument ili scrapeovan websajt recimo) kao txt ili json
+    # chunking treba raditi bez overlapa
+    # moze da se razdvoji title i keyword u jedan index,
+    # title i text u drugi index, onda imamo i duzi i kraci index
+
+    chain = create_extraction_chain(schema, llm)
+    result = chain.run(line)
+    for item in result:
+        title = item["title"]
+        keyword = item["keyword"]
+        text = item["text"]
+        # ovo treba da postane jedan chunk, na koji se daodaju metadata i onda upsertuje u index
+        # prakticno umesto prefix-a tj ovo je dinamicki prefix
+        # if title and keyword and text:
+        # st.write(f"{title}: keyword: {keyword} ->  {text}\n")
+        added_schema_data = f"Title: {title} <- Keyword: {keyword} -> Text: {text}"
+        return added_schema_data
+    # else:
+    #     st.write("No title or keyword or text")
 
 
+# na kraju se upsertuje u index svaka linija
+# opciono moze da se ponovo sacuja u txt ili json fajl
+
+
+# Define a function to scrape a given URL
 def main(chunk_size, chunk_overlap):
     with st.form(key="my_form_scrape", clear_on_submit=False):
         global res, err_log, headers, sajt, source, vrsta
@@ -105,6 +148,10 @@ def main(chunk_size, chunk_overlap):
             help="Prefix se dodaje na pocetak teksta pre podela na delove za indeksiranje",
         )
         vrsta = st.radio("Unesi vrstu (default je body main): ", ("body main", "body"))
+        add_schema = st.radio(
+            "Da li zelite da dodate Schema Data (moze znacajno produziti vreme kreiranja): ",
+            ("Da", "Ne"),
+        )
         # chunk_size, chunk_overlap = def_chunk()
         submit_button = st.form_submit_button(label="Submit")
         st.info(f"Chunk size: {chunk_size}, chunk overlap: {chunk_overlap}")
@@ -117,13 +164,13 @@ def main(chunk_size, chunk_overlap):
             # Read OpenAI API key from file
             openai.api_key = os.environ.get("OPENAI_API_KEY")
 
-            # Retrieving API keys from files
-            PINECONE_API_KEY = os.environ.get("PINECONE_API_KEY")
+            # # Retrieving API keys from files
+            # PINECONE_API_KEY = os.environ.get("PINECONE_API_KEY")
 
-            # Setting the environment for Pinecone API
-            PINECONE_API_ENV = os.environ.get("PINECONE_API_ENV")
+            # # Setting the environment for Pinecone API
+            # PINECONE_API_ENV = os.environ.get("PINECONE_API_ENV")
 
-            pinecone.init(api_key=PINECONE_API_KEY, environment=PINECONE_API_ENV)
+            # pinecone.init(api_key=PINECONE_API_KEY, environment=PINECONE_API_ENV)
 
             # Initialize BeautifulSoup with the response text
             soup = BeautifulSoup(res.text, "html.parser")
@@ -138,8 +185,8 @@ def main(chunk_size, chunk_overlap):
             placeholder = st.empty()
 
             with st.spinner(f"Scraping "):
-                # while True:
-                while i < 3:
+                while True:
+                    # while i < 1:
                     i += 1
                     if len(links) == 0:
                         st.success("URL list complete")
@@ -168,37 +215,59 @@ def main(chunk_size, chunk_overlap):
 
                 # Initialize RecursiveCharacterTextSplitter
                 text_splitter = RecursiveCharacterTextSplitter(
-                    chunk_size=chunk_size,
-                    chunk_overlap=chunk_overlap,
-                    separators=["\n\n", "\n", " ", ""],
+                    chunk_size=chunk_size, chunk_overlap=chunk_overlap
                 )
 
             chunks = []
-            progress_text = "Embeding creation in progress. Please wait."
+            progress_text = "Embedings data creation in progress. Please wait."
+
             progress_bar = st.progress(0.0, text=progress_text)
             ph = st.empty()
+            progress_barl = st.progress(0.0, text=progress_text)
+            ph2 = st.empty()
+            ph3 = st.empty()
             # Iterate over data records
-            for idx, record in enumerate(tqdm(data)):
-                # Split the text into chunks using the text splitter
-                texts = text_splitter.split_text(record["text"])
+            with st.spinner(f"Creating Embedings data "):
+                for idx, record in enumerate(tqdm(data)):
+                    # Split the text into chunks using the text splitter
+                    texts = text_splitter.split_text(record["text"])
 
-                sto = len(data)
-                odsto = idx + 1
-                procenat = odsto / sto
-                progress_bar.progress(procenat, text=progress_text)
-                k = int(odsto / sto * 100)
-                ph.text(f"Ucitano {odsto} od {sto} linkova sto je {k} % ")
-                # Create a list of chunks for each text
-                chunks.extend(
-                    [
-                        {
-                            "id": str(uuid4()),
-                            "text": text_prefix + texts[i],
-                            "source": record["url"],
-                        }
-                        for i in range(len(texts))
-                    ]
-                )
+                    sto = len(data)
+                    odsto = idx + 1
+                    procenat = odsto / sto
+
+                    k = int(odsto / sto * 100)
+                    progress_bar.progress(procenat, text=progress_text)
+                    ph.text(f"Ucitano {odsto} od {sto} linkova sto je {k} % ")
+                    # Create a list of chunks for each text
+
+                    # ovde moze da se doda dinamicko dadavanje prefixa
+                    for il in range(len(texts)):
+                        stol = len(texts)
+                        odstol = il + 1
+                        procenatl = odstol / stol
+
+                        kl = int(odstol / stol * 100)
+                        progress_barl.progress(procenatl, text=progress_text)
+                        ph2.text(f"Ucitano {odstol} od {stol} chunkova sto je {kl} % ")
+                        try:
+                            if add_schema == "Da":
+                                add_text = add_schema_data(texts[il])
+                                texts[il] = f"{add_text} -> Izvorni tekst: {texts[il]}"
+                                with st.expander(
+                                    f"Obradjeni text, link: {odsto} deo: {odstol}"
+                                ):
+                                    st.write(texts[il])
+                        except Exception as e:
+                            st.error("Prefix nije na raspolaganju za ovaj chunk.")
+
+                        chunks.append(
+                            {
+                                "id": str(uuid4()),
+                                "text": f"{text_prefix}  {texts[il]}",
+                                "source": record["url"],
+                            }
+                        )
 
             # Assuming 'chunks' is your list of dictionaries
 
@@ -209,18 +278,19 @@ def main(chunk_size, chunk_overlap):
             with open(json_file_path, "w", encoding="utf-8") as json_file:
                 json_file.write("[ ")  # Start with an opening bracket
 
-                for index, item in enumerate(chunks):
+                for index, iteml in enumerate(chunks):
                     if index > 0:
                         json_file.write(
                             ",\n"
                         )  # Add a comma and newline for all except the first item
-                    json.dump(item, json_file, ensure_ascii=False)
+                    json.dump(iteml, json_file, ensure_ascii=False)
 
                 json_file.write(" ]")  # End with a closing bracket
-
-            st.success(
-                f"Texts saved to {json_file_path} and are now ready for Embeddings"
-            )
+                with open("err_log.txt", "w", encoding="utf-8") as file:
+                    file.write(err_log)
+                ph3.success(
+                    f"Texts saved to {json_file_path} and are now ready for Embeddings"
+                )
 
 
 # if __name__ == "__main__":
