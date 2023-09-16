@@ -8,7 +8,13 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.document_loaders import UnstructuredFileLoader, UnstructuredPDFLoader
 import os
 
-from myfunc.mojafunkcija import st_style, pinecone_stats, positive_login, show_logo
+from myfunc.mojafunkcija import (
+    st_style,
+    pinecone_stats,
+    positive_login,
+    show_logo,
+    pinecone_stats,
+)
 from time import sleep
 from tqdm.auto import tqdm
 from uuid import uuid4
@@ -16,7 +22,6 @@ import openai
 import json
 
 import Pinecone_Utility
-from mojafunkcija import pinecone_stats
 import Scrapper
 
 # this code is used to split the document into smaller parts and create OpenAI embeddings
