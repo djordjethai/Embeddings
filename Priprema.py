@@ -51,6 +51,9 @@ def def_chunk():
         return chunk_size, chunk_overlap
 
 
+chunk_size, chunk_overlap = def_chunk()
+
+
 def main():
     show_logo()
 
@@ -86,7 +89,6 @@ def main():
     if "nesto" not in st.session_state:
         st.session_state["nesto"] = 0
 
-    chunk_size, chunk_overlap = def_chunk()
     col1, col2, col3, col4, col5 = st.columns(5)
 
     with col1:
