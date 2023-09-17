@@ -51,11 +51,9 @@ def def_chunk():
         return chunk_size, chunk_overlap
 
 
-chunk_size, chunk_overlap = def_chunk()
-
-
 def main():
     show_logo()
+    chunk_size, chunk_overlap = def_chunk()
 
     st.subheader("Izaberite operaciju za Embeddings")
     with st.expander("Procitajte uputstvo:"):
