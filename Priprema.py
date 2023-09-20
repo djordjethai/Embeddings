@@ -24,29 +24,26 @@ import json
 import Pinecone_Utility
 import Scrapper
 
-# this code is used to split the document into smaller parts and create OpenAI embeddings
-
-
 st_style()
 
 
 def def_chunk():
     with st.sidebar:
         chunk_size = st.slider(
-            "Set chunk size in characters (200 - 8000)",
+            "Zadati veličinu chunk-ova (200 - 8000).",
             200,
             8000,
             1500,
             step=100,
-            help="Velicina chunka odredjuje velicinu indeksiranog dokumenta. Veci chunk obezbedjuje bolji kontekst, dok manji chunk omogucava precizniji odgovor.",
+            help="Veličina chunka određuje veličinu indeksiranog dokumenta. Veći chunk obezbeđuje bolji kontekst, dok manji chunk omogućava precizniji odgovor.",
         )
         chunk_overlap = st.slider(
-            "Set overlap size in characters (0 - 1000), must be less than the chunk size",
+            "Zadati preklapanje chunk-ova (0 - 1000); vrednost mora biti manja od veličine chunk-ova.",
             0,
             1000,
             0,
             step=10,
-            help="Velicina overlapa odredjuje velicinu preklapanja sardzaja dokumenta. Veci overlap obezbedjuje bolji prenos konteksta.",
+            help="Određuje veličinu preklapanja uzastopnih sardžaja dokumenta. U opštem slučaju, veće preklapanje će obezbediti bolji prenos konteksta.",
         )
         return chunk_size, chunk_overlap
 
@@ -55,17 +52,17 @@ def main():
     show_logo()
     chunk_size, chunk_overlap = def_chunk()
 
-    st.subheader("Izaberite operaciju za Embeddings")
-    with st.expander("Procitajte uputstvo:"):
-        st.caption(
-            "Prethodni korak bio je kreiranje pitanja. To smo radili pomocu besplatnog CHATGPT modela. Iz svake oblasti (ili iz dokumenta) zamolimo CHATGPT da kreira relevantna pitanja. Na pitanja mozemo da odgovorimo sami ili se odgovori mogu izvuci iz dokumenta."
-        )
-        st.caption(
-            "Ukoliko zelite da vam model kreira odgovore, odaberite ulazni fajl sa pitanjma iz prethodnog koraka. Opciono, ako je za odgovore potreban izvor, odaberite i fajl sa izvorom. Unesite sistemsku poruku (opis ponasanja modela) i naziv FT modela. Kliknite na Submit i sacekajte da se obrada zavrsi. Fajl sa odgovorima cete kasnije korisiti za kreiranje FT modela."
-        )
-        st.caption(
-            "Pre prelaska na sledecu fazu OBAVEZNO pregledajte izlazni dokument sa odgovorima i korigujte ga po potrebi. "
-        )
+    st.subheader("Izaberite operaciju za Embeding")
+    with st.expander("Pročitajte uputstvo:"):
+        st.caption("""
+                   Prethodni korak bio je kreiranje pitanja. To smo radili pomoću besplatnog ChatGPT modela. Iz svake oblasti (ili iz dokumenta)
+                   zamolimo ChatGPT da kreira relevantna pitanja. Na pitanja mozemo da odgovorimo sami ili se odgovori mogu izvuci iz dokumenta.\n
+                   Ukoliko zelite da vam model kreira odgovore, odaberite ulazni fajl sa pitanjma iz prethodnog koraka.
+                   Opciono, ako je za odgovore potreban izvor, odaberite i fajl sa izvorom. Unesite sistemsku poruku (opis ponašanja modela)
+                   i naziv FT modela. Kliknite na Submit i sačekajte da se obrada završi.
+                   Fajl sa odgovorima ćete kasnije korisiti za kreiranje FT modela.\n
+                   Pre prelaska na sledeću fazu OBAVEZNO pregledajte izlazni dokument sa odgovorima i korigujte ga po potrebi.
+                   """)
 
     if "podeli_button" not in st.session_state:
         st.session_state["podeli_button"] = False
@@ -101,18 +98,18 @@ def main():
     with col3:
         with st.form(key="kreiraj", clear_on_submit=False):
             st.session_state.kreiraj_button = st.form_submit_button(
-                label="Kreiraj Embedings",
+                label="Kreiraj Embeding",
                 use_container_width=True,
-                help="Kreiranje Pinecone Indexa",
+                help="Kreiranje Pinecone Indeksa",
             )
             if st.session_state.kreiraj_button:
                 st.session_state.nesto = 2
     with col4:
         with st.form(key="manage", clear_on_submit=False):
             st.session_state.manage_button = st.form_submit_button(
-                label="Manage Pinecone",
+                label="Upravljaj sa Pinecone",
                 use_container_width=True,
-                help="Manage Pinecone Indexa",
+                help="Manipulacije sa Pinecone Indeksom",
             )
             if st.session_state.manage_button:
                 st.session_state.nesto = 3
@@ -120,9 +117,9 @@ def main():
         with st.form(key="stats", clear_on_submit=False):
             index = pinecone.Index("embedings1")
             st.session_state.stats_button = st.form_submit_button(
-                label="Pokazi Statistiku",
+                label="Pokaži Statistiku",
                 use_container_width=True,
-                help="Stats za Pinecone Indexa",
+                help="Statistika Pinecone Indeksa",
             )
             if st.session_state.stats_button:
                 st.session_state.nesto = 4
@@ -156,21 +153,21 @@ def main():
 
 def prepare_embeddings(chunk_size, chunk_overlap):
     with st.form(key="my_form_prepare", clear_on_submit=False):
-        st.subheader("Upload documents and metadata for Pinecone Index")
+        st.subheader("Učitajte dokumenta i metadata za Pinecone Indeks")
 
         dokum = st.file_uploader(
             "Izaberite dokument/e", key="upload_file", type=["txt", "pdf", "docx"]
         )
         # prefix moze da se definise i dinamicki
         text_prefix = st.text_input(
-            "Unesi prefix za tekst: ",
-            help="Prefix se dodaje na pocetak teksta pre podela na delove za indeksiranje",
+            "Unesite prefiks za tekst: ",
+            help="Prefiks se dodaje na početak teksta pre podela na delove za indeksiranje",
         )
         st.session_state.submit_b = st.form_submit_button(
             label="Submit",
-            help="Submit dugme pokrece podelu dokumenta na delove za indeksiranje",
+            help="Pokreće podelu dokumenta na delove za indeksiranje",
         )
-        st.info(f"Chunk size: {chunk_size}, chunk overlap: {chunk_overlap}")
+        st.info(f"Chunk veličina: {chunk_size}, chunk preklapanje: {chunk_overlap}")
         if len(text_prefix) > 0:
             text_prefix = text_prefix + " "
 
@@ -197,7 +194,7 @@ def prepare_embeddings(chunk_size, chunk_overlap):
             # # Ask the user if they want to do OpenAI embeddings
 
             # # Create the OpenAI embeddings
-            st.write(f"Ucitano {len(texts)} tekstova")
+            st.write(f"Učitano {len(texts)} tekstova")
 
             # Define a custom method to convert Document to a JSON-serializable format
             output_json_list = []
@@ -228,7 +225,7 @@ def prepare_embeddings(chunk_size, chunk_overlap):
                 json_file.write(" ]")  # End with a closing bracket
 
             st.success(
-                f"Texts saved to {json_file_path} and are now ready for Embeddings"
+                f"Tekstoi sačuvani na {json_file_path} su sada spremni za Embeding"
             )
 
 
@@ -249,10 +246,10 @@ def do_embeddings():
         # with st.form(key="my_form2", clear_on_submit=False):
         namespace = st.text_input(
             "Unesi naziv namespace-a: ",
-            help="Naziv namespace-a je obavezan za kreiranje Pinecone Indexa",
+            help="Naziv namespace-a je obavezan za kreiranje Pinecone Indeksa",
         )
         submit_b2 = st.form_submit_button(
-            label="Submit", help="Submit dugme pokrece kreiranje Pinecone Indexa"
+            label="Submit", help="Pokreće kreiranje Pinecone Indeksa"
         )
         if submit_b2 and dokum and namespace:
             file = open(dokum.name, "r", encoding="utf-8")
@@ -279,7 +276,7 @@ def do_embeddings():
             # Initialize the Pinecone index
             index = pinecone.Index(index_name)
             batch_size = 100  # how many embeddings we create and insert at once
-            progress_text2 = "Upserting to Pinecone in progress. Please wait."
+            progress_text2 = "Insertovanje u Pinecone je u toku."
             progress_bar2 = st.progress(0.0, text=progress_text2)
             with open(dokum.name, "r", encoding="utf-8") as json_file:
                 data = json.load(json_file)
@@ -326,7 +323,7 @@ def do_embeddings():
                 if embeds:
                     to_upsert = list(zip(ids_batch, embeds, meta_batch))
                 else:
-                    err_log += f"Greska: {meta_batch}\n"
+                    err_log += f"Greška: {meta_batch}\n"
                 # upsert to Pinecone
                 err_log += f"Upserting {len(to_upsert)} embeddings\n"
                 with open("err_log.txt", "w", encoding="utf-8") as file:
@@ -340,14 +337,14 @@ def do_embeddings():
                 progress = deo / stodva
                 l = int(deo / stodva * 100)
 
-                ph2.text(f"Ucitano je {deo} od {stodva} linkova sto je {l} %")
+                ph2.text(f"Učitano je {deo} od {stodva} linkova što je {l} %")
 
                 progress_bar2.progress(progress, text=progress_text2)
 
             # gives stats about index
-            st.write("Napunjen pinecone")
+            st.write("Napunjen Pinecone")
             index = pinecone.Index(index_name)
-            st.write(f"Sacuvano u Pinecone")
+            st.write(f"Sačuvano u Pinecone-u")
             pinecone_stats(index)
 
 

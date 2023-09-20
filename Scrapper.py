@@ -141,20 +141,20 @@ def main(chunk_size, chunk_overlap):
         # Set the domain URL
 
         # with st.form(key="my_form", clear_on_submit=False):
-        sajt = st.text_input("Unesi sajt : ")
+        sajt = st.text_input("Unesite sajt : ")
         # prefix moze da se definise i dinamicki
         text_prefix = st.text_input(
-            "Unesi prefix za tekst: ",
-            help="Prefix se dodaje na pocetak teksta pre podela na delove za indeksiranje",
+            "Unesite prefiks za tekst: ",
+            help="Prefiks se dodaje na početak teksta pre podela na delove za indeksiranje",
         )
-        vrsta = st.radio("Unesi vrstu (default je body main): ", ("body main", "body"))
+        vrsta = st.radio("Unesite vrstu (default je body main): ", ("body main", "body"))
         add_schema = st.radio(
-            "Da li zelite da dodate Schema Data (moze znacajno produziti vreme kreiranja): ",
+            "Da li želite da dodate Schema Data (može značajno produžiti vreme potrebno za kreiranje): ",
             ("Da", "Ne"),
         )
         # chunk_size, chunk_overlap = def_chunk()
         submit_button = st.form_submit_button(label="Submit")
-        st.info(f"Chunk size: {chunk_size}, chunk overlap: {chunk_overlap}")
+        st.info(f"Chunk veličina: {chunk_size}, chunk preklapanje: {chunk_overlap}")
         if len(text_prefix) > 0:
             text_prefix = text_prefix + " "
         if submit_button and not sajt == "":
@@ -189,12 +189,12 @@ def main(chunk_size, chunk_overlap):
                     # while i < 1:
                     i += 1
                     if len(links) == 0:
-                        st.success("URL list complete")
+                        st.success("URL lista je kompletirana")
                         break
                     url = links[0]
 
                     # st.write(f'{url}, ">>", {i}')
-                    placeholder.text(f"Obradjujem link broj {i}")
+                    placeholder.text(f"Obrađujem link broj {i}")
                     try:
                         res = scrape(url)
                         err_log += f" OK scraping {url}: {i}\n"
@@ -219,7 +219,7 @@ def main(chunk_size, chunk_overlap):
                 )
 
             chunks = []
-            progress_text = "Embedings data creation in progress. Please wait."
+            progress_text = "Podaci za Embeding se trenutno kreiraju. Molimo sačekajte."
 
             progress_bar = st.progress(0.0, text=progress_text)
             ph = st.empty()
@@ -227,7 +227,7 @@ def main(chunk_size, chunk_overlap):
             ph2 = st.empty()
             ph3 = st.empty()
             # Iterate over data records
-            with st.spinner(f"Creating Embedings data "):
+            with st.spinner(f"Kreiranje podataka za Embeding"):
                 for idx, record in enumerate(tqdm(data)):
                     # Split the text into chunks using the text splitter
                     texts = text_splitter.split_text(record["text"])
@@ -238,7 +238,7 @@ def main(chunk_size, chunk_overlap):
 
                     k = int(odsto / sto * 100)
                     progress_bar.progress(procenat, text=progress_text)
-                    ph.text(f"Ucitano {odsto} od {sto} linkova sto je {k} % ")
+                    ph.text(f"Učitano {odsto} od {sto} linkova što je {k} % ")
                     # Create a list of chunks for each text
 
                     # ovde moze da se doda dinamicko dadavanje prefixa
@@ -249,17 +249,17 @@ def main(chunk_size, chunk_overlap):
 
                         kl = int(odstol / stol * 100)
                         progress_barl.progress(procenatl, text=progress_text)
-                        ph2.text(f"Ucitano {odstol} od {stol} chunkova sto je {kl} % ")
+                        ph2.text(f"Učitano {odstol} od {stol} chunkova što je {kl} % ")
                         try:
                             if add_schema == "Da":
                                 add_text = add_schema_data(texts[il])
                                 texts[il] = f"{add_text} -> Izvorni tekst: {texts[il]}"
                                 with st.expander(
-                                    f"Obradjeni text, link: {odsto} deo: {odstol}"
+                                    f"Obrađeni tekst, link: {odsto} deo: {odstol}"
                                 ):
                                     st.write(texts[il])
                         except Exception as e:
-                            st.error("Prefix nije na raspolaganju za ovaj chunk.")
+                            st.error("Prefiks nije na raspolaganju za ovaj chunk.")
 
                         chunks.append(
                             {
@@ -289,7 +289,7 @@ def main(chunk_size, chunk_overlap):
                 with open("err_log.txt", "w", encoding="utf-8") as file:
                     file.write(err_log)
                 ph3.success(
-                    f"Texts saved to {json_file_path} and are now ready for Embeddings"
+                    f"Tekstovi sačuvani na {json_file_path} su sada spremni za Embeding"
                 )
 
 
