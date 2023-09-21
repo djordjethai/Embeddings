@@ -24,6 +24,7 @@ import json
 import Pinecone_Utility
 import Scrapper
 
+version = "21.09.23."
 st_style()
 
 
@@ -52,6 +53,7 @@ def main():
     show_logo()
     chunk_size, chunk_overlap = def_chunk()
 
+    st.markdown(f"<p style='font-size: 10px; color: grey;'>{version}</p>", unsafe_allow_html=True)
     st.subheader("Izaberite operaciju za Embeding")
     with st.expander("Pročitajte uputstvo:"):
         st.caption("""
