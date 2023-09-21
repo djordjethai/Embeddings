@@ -354,7 +354,7 @@ def do_embeddings():
 deployment_environment = os.environ.get("DEPLOYMENT_ENVIRONMENT")
 
 if deployment_environment == "Streamlit":
-    name, authentication_status, username = positive_login(main)
+    name, authentication_status, username = positive_login(main, " ")
 else:
     if __name__ == "__main__":
         main()
