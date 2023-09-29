@@ -23,6 +23,10 @@ import json
 
 import Pinecone_Utility
 import Scrapper
+import PyPDF2
+import io
+import re
+
 
 version = "21.09.23."
 st_style()
@@ -53,10 +57,14 @@ def main():
     show_logo()
     chunk_size, chunk_overlap = def_chunk()
 
-    st.markdown(f"<p style='font-size: 10px; color: grey;'>{version}</p>", unsafe_allow_html=True)
+    st.markdown(
+        f"<p style='font-size: 10px; color: grey;'>{version}</p>",
+        unsafe_allow_html=True,
+    )
     st.subheader("Izaberite operaciju za Embeding")
     with st.expander("Pročitajte uputstvo:"):
-        st.caption("""
+        st.caption(
+            """
                    Prethodni korak bio je kreiranje pitanja. To smo radili pomoću besplatnog ChatGPT modela. Iz svake oblasti (ili iz dokumenta)
                    zamolimo ChatGPT da kreira relevantna pitanja. Na pitanja mozemo da odgovorimo sami ili se odgovori mogu izvuci iz dokumenta.\n
                    Ukoliko zelite da vam model kreira odgovore, odaberite ulazni fajl sa pitanjma iz prethodnog koraka.
@@ -64,7 +72,8 @@ def main():
                    i naziv FT modela. Kliknite na Submit i sačekajte da se obrada završi.
                    Fajl sa odgovorima ćete kasnije korisiti za kreiranje FT modela.\n
                    Pre prelaska na sledeću fazu OBAVEZNO pregledajte izlazni dokument sa odgovorima i korigujte ga po potrebi.
-                   """)
+                   """
+        )
 
     if "podeli_button" not in st.session_state:
         st.session_state["podeli_button"] = False
@@ -174,9 +183,25 @@ def prepare_embeddings(chunk_size, chunk_overlap):
             text_prefix = text_prefix + " "
 
         if dokum is not None and st.session_state.submit_b == True:
+            with io.open(dokum.name, "wb") as file:
+                file.write(dokum.getbuffer())
+
             if ".pdf" in dokum.name:
-                loader = UnstructuredPDFLoader(dokum.name, encoding="utf-8")
+                pdf_reader = PyPDF2.PdfReader(dokum)
+                num_pages = len(pdf_reader.pages)
+                text_content = ""
+
+                for page in range(num_pages):
+                    page_obj = pdf_reader.pages[page]
+                    text_content += page_obj.extract_text()
+                text_content = text_content.replace("•", "")
+                text_content = re.sub(r"(?<=\b\w) (?=\w\b)", "", text_content)
+                with io.open("temp.txt", "w", encoding="utf-8") as f:
+                    f.write(text_content)
+
+                loader = UnstructuredFileLoader("temp.txt", encoding="utf-8")
             else:
+                # Creating a file loader object
                 loader = UnstructuredFileLoader(dokum.name, encoding="utf-8")
 
             data = loader.load()
