@@ -163,6 +163,9 @@ def main():
 
 
 def prepare_embeddings(chunk_size, chunk_overlap):
+    skinuto = False
+    napisano = False
+    json_file_path = "chunks.json"
     with st.form(key="my_form_prepare", clear_on_submit=False):
         st.subheader("Učitajte dokumenta i metadata za Pinecone Indeks")
 
@@ -250,10 +253,19 @@ def prepare_embeddings(chunk_size, chunk_overlap):
                     json.dump(item, json_file, ensure_ascii=False)
 
                 json_file.write(" ]")  # End with a closing bracket
-
-            st.success(
-                f"Tekstoi sačuvani na {json_file_path} su sada spremni za Embeding"
+            napisano = st.info(
+                "Tekstovi su sačuvani u JSON obliku, downloadujte ih na svoj racunar"
             )
+
+    if napisano:
+        skinuto = st.download_button(
+            "Download JSON",
+            data=json_file_path,
+            file_name="output.jsonl",
+            mime="application/jsonl",
+        )
+    if skinuto:
+        st.success(f"Tekstovi sačuvani na {json_file_path} su sada spremni za Embeding")
 
 
 #
