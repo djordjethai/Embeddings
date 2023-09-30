@@ -5,6 +5,9 @@ secondaryBackgroundColor="#e0e0ef"
 textColor="#101014"
 font="sans serif"
 
+[server]
+enableXsrfProtection = false
+
 [browser]
 gatherUsageStats = false
 
@@ -22,4 +25,3 @@ gatherUsageStats = false
 
 [client]
 toolbarMode = "viewer"
-
