@@ -6,7 +6,8 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 import os
 import re
 import html
-import urllib.parse
+from urllib.parse import urljoin
+from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 import requests
 import openai
@@ -49,7 +50,7 @@ def scrape(url: str):
             href = link["href"]
             base_url, extension = os.path.splitext(href)
             if not extension and not "mailto" in href and not "tel" in href:
-                local_links.append(urllib.parse.urljoin(sajt, href))
+                local_links.append(urljoin(sajt, href))
 
                 # Find the main content using CSS selectors
                 try:
@@ -131,6 +132,9 @@ def add_schema_data(line):
 
 # Define a function to scrape a given URL
 def main(chunk_size, chunk_overlap):
+    skinuto = False
+    napisano = False
+    file_name = "chunks.json"
     with st.form(key="my_form_scrape", clear_on_submit=False):
         global res, err_log, headers, sajt, source, vrsta
         st.subheader("Pinecone Scraping")
@@ -147,7 +151,9 @@ def main(chunk_size, chunk_overlap):
             "Unesite prefiks za tekst: ",
             help="Prefiks se dodaje na početak teksta pre podela na delove za indeksiranje",
         )
-        vrsta = st.radio("Unesite vrstu (default je body main): ", ("body main", "body"))
+        vrsta = st.radio(
+            "Unesite vrstu (default je body main): ", ("body main", "body")
+        )
         add_schema = st.radio(
             "Da li želite da dodate Schema Data (može značajno produžiti vreme potrebno za kreiranje): ",
             ("Da", "Ne"),
@@ -250,6 +256,7 @@ def main(chunk_size, chunk_overlap):
                         kl = int(odstol / stol * 100)
                         progress_barl.progress(procenatl, text=progress_text)
                         ph2.text(f"Učitano {odstol} od {stol} chunkova što je {kl} % ")
+
                         try:
                             if add_schema == "Da":
                                 add_text = add_schema_data(texts[il])
@@ -269,28 +276,43 @@ def main(chunk_size, chunk_overlap):
                             }
                         )
 
+                    # Generate JSON strings for each chunk and join them with newline characters
+                    json_strings = [
+                        json.dumps(chunk, ensure_ascii=False) for chunk in chunks
+                    ]
+                    json_string = ",\n".join(json_strings)
+
+                    # Add "[" at the beginning and "]" at the end of the entire JSON string
+                    json_string = "[" + json_string + "]"
             # Assuming 'chunks' is your list of dictionaries
 
+            # Now, json_string contains the JSON data as a string
+
+            napisano = st.info(
+                "Tekstovi su sačuvani u JSON obliku, downloadujte ih na svoj računar"
+            )
+
             # Specify the file name where you want to save the JSON data
-            json_file_path = "chunks.json"
 
-            # # Save 'chunks' to a JSON file
-            with open(json_file_path, "w", encoding="utf-8") as json_file:
-                json_file.write("[ ")  # Start with an opening bracket
+    parsed_url = urlparse(sajt)
+    # Get the netloc (which includes the website name)
+    website_name = parsed_url.netloc
+    # Remove any potential "www." prefix
+    if website_name.startswith("www."):
+        website_name = website_name[4:]
+    parts = website_name.split(".")
+    if len(parts) > 1:
+        website_name = parts[0]
 
-                for index, iteml in enumerate(chunks):
-                    if index > 0:
-                        json_file.write(
-                            ",\n"
-                        )  # Add a comma and newline for all except the first item
-                    json.dump(iteml, json_file, ensure_ascii=False)
-
-                json_file.write(" ]")  # End with a closing bracket
-                with open("err_log.txt", "w", encoding="utf-8") as file:
-                    file.write(err_log)
-                ph3.success(
-                    f"Tekstovi sačuvani na {json_file_path} su sada spremni za Embeding"
-                )
+    if napisano:
+        skinuto = st.download_button(
+            "Download JSON",
+            data=json_string,
+            file_name=f"{website_name}.json",
+            mime="application/json",
+        )
+    if skinuto:
+        st.success(f"Tekstovi sačuvani na {file_name} su sada spremni za Embeding")
 
 
 # if __name__ == "__main__":

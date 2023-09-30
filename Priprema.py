@@ -26,6 +26,7 @@ import Scrapper
 import PyPDF2
 import io
 import re
+from io import StringIO
 
 
 version = "21.09.23."
@@ -165,7 +166,8 @@ def main():
 def prepare_embeddings(chunk_size, chunk_overlap):
     skinuto = False
     napisano = False
-    json_file_path = "chunks.json"
+
+    file_name = "chunks.json"
     with st.form(key="my_form_prepare", clear_on_submit=False):
         st.subheader("Učitajte dokumenta i metadata za Pinecone Indeks")
 
@@ -228,8 +230,8 @@ def prepare_embeddings(chunk_size, chunk_overlap):
 
             # Define a custom method to convert Document to a JSON-serializable format
             output_json_list = []
-
             # Loop through the Document objects and convert them to JSON
+
             for document in texts:
                 output_dict = {
                     "id": str(uuid4()),
@@ -239,36 +241,31 @@ def prepare_embeddings(chunk_size, chunk_overlap):
                 output_json_list.append(output_dict)
 
             # # Specify the file name where you want to save the JSON data
-            json_file_path = "chunks.json"
+            json_string = (
+                "["
+                + ",\n".join(
+                    json.dumps(d, ensure_ascii=False) for d in output_json_list
+                )
+                + "]"
+            )
 
-            # # Save 'chunks' to a JSON file
-            with open(json_file_path, "w", encoding="utf-8") as json_file:
-                json_file.write("[ ")  # Start with an opening bracket
+            # Now, json_string contains the JSON data as a string
 
-                for index, item in enumerate(output_json_list):
-                    if index > 0:
-                        json_file.write(
-                            ",\n"
-                        )  # Add a comma and newline for all except the first item
-                    json.dump(item, json_file, ensure_ascii=False)
-
-                json_file.write(" ]")  # End with a closing bracket
             napisano = st.info(
-                "Tekstovi su sačuvani u JSON obliku, downloadujte ih na svoj racunar"
+                "Tekstovi su sačuvani u JSON obliku, downloadujte ih na svoj računar"
             )
 
     if napisano:
         skinuto = st.download_button(
             "Download JSON",
-            data=json_file_path,
-            file_name="output.jsonl",
-            mime="application/jsonl",
+            data=json_string,
+            file_name=f"{dokum.name}.json",
+            mime="application/json",
         )
     if skinuto:
-        st.success(f"Tekstovi sačuvani na {json_file_path} su sada spremni za Embeding")
+        st.success(f"Tekstovi sačuvani na {file_name} su sada spremni za Embeding")
 
 
-#
 def do_embeddings():
     with st.form(key="my_form_do", clear_on_submit=False):
         err_log = ""
@@ -291,10 +288,19 @@ def do_embeddings():
             label="Submit", help="Pokreće kreiranje Pinecone Indeksa"
         )
         if submit_b2 and dokum and namespace:
-            file = open(dokum.name, "r", encoding="utf-8")
-            for line in file:
+            stringio = StringIO(dokum.getvalue().decode("utf-8"))
+
+            # To read file as string:
+            file = stringio.read()
+            json_string = json.dumps(json.loads(file), ensure_ascii=False)
+            data = json.loads(json_string)
+            with st.expander("Prikaži tekstove", expanded=False):
+                st.write(data)
+
+            # file = dokum.getbuffer()
+            for line in data:
                 # Remove leading/trailing whitespace and add to the list
-                chunks.append(line.strip())
+                chunks.append(line)
             # Initialize OpenAI and Pinecone API key
             OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
             PINECONE_API_KEY = os.environ.get("PINECONE_API_KEY")
@@ -317,8 +323,6 @@ def do_embeddings():
             batch_size = 100  # how many embeddings we create and insert at once
             progress_text2 = "Insertovanje u Pinecone je u toku."
             progress_bar2 = st.progress(0.0, text=progress_text2)
-            with open(dokum.name, "r", encoding="utf-8") as json_file:
-                data = json.load(json_file)
 
             # Now, 'data' contains the contents of the JSON file as a Python data structure (usually a dictionary or a list, depending on the JSON structure)
             # You can access the data and work with it as needed
@@ -381,9 +385,9 @@ def do_embeddings():
                 progress_bar2.progress(progress, text=progress_text2)
 
             # gives stats about index
-            st.write("Napunjen Pinecone")
+            st.info("Napunjen Pinecone")
             index = pinecone.Index(index_name)
-            st.write(f"Sačuvano u Pinecone-u")
+            st.success(f"Sačuvano u Pinecone-u")
             pinecone_stats(index)
 
 
