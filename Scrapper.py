@@ -157,6 +157,8 @@ def main(chunk_size, chunk_overlap):
         add_schema = st.radio(
             "Da li želite da dodate Schema Data (može značajno produžiti vreme potrebno za kreiranje): ",
             ("Da", "Ne"),
+            help="Schema Data se dodaje na početak teksta",
+            key="add_schema_web",
         )
         # chunk_size, chunk_overlap = def_chunk()
         submit_button = st.form_submit_button(label="Submit")

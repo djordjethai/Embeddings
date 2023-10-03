@@ -183,6 +183,7 @@ def prepare_embeddings(chunk_size, chunk_overlap):
             "Da li želite da dodate Schema Data (može značajno produžiti vreme potrebno za kreiranje): ",
             ("Da", "Ne"),
             key="add_schema_doc",
+            help="Schema Data se dodaje na početak teksta",
         )
         st.session_state.submit_b = st.form_submit_button(
             label="Submit",
