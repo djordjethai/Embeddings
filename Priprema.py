@@ -29,7 +29,7 @@ import re
 from io import StringIO
 
 
-version = "21.09.23."
+version = "03.10.23."
 st_style()
 
 
@@ -179,6 +179,11 @@ def prepare_embeddings(chunk_size, chunk_overlap):
             "Unesite prefiks za tekst: ",
             help="Prefiks se dodaje na početak teksta pre podela na delove za indeksiranje",
         )
+        add_schema = st.radio(
+            "Da li želite da dodate Schema Data (može značajno produžiti vreme potrebno za kreiranje): ",
+            ("Da", "Ne"),
+            key="add_schema_doc",
+        )
         st.session_state.submit_b = st.form_submit_button(
             label="Submit",
             help="Pokreće podelu dokumenta na delove za indeksiranje",
@@ -231,8 +236,22 @@ def prepare_embeddings(chunk_size, chunk_overlap):
             # Define a custom method to convert Document to a JSON-serializable format
             output_json_list = []
             # Loop through the Document objects and convert them to JSON
-
+            i = 0
             for document in texts:
+                i += 1
+                try:
+                    if add_schema == "Da":
+                        document.page_content = Scrapper.add_schema_data(
+                            document.page_content
+                        )
+
+                        with st.expander(
+                            f"Obrađeni tekst: {i} od {len(texts)} ", expanded=False
+                        ):
+                            st.write(document.page_content)
+
+                except Exception as e:
+                    st.error("Prefiks nije na raspolaganju za ovaj chunk. {e}")
                 output_dict = {
                     "id": str(uuid4()),
                     "text": text_prefix + document.page_content,
