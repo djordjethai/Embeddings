@@ -4,7 +4,10 @@ st.set_page_config(page_title="Embeddings", page_icon="📔", layout="wide")
 import pinecone
 
 from langchain.embeddings.openai import OpenAIEmbeddings
-from langchain.text_splitter import RecursiveCharacterTextSplitter, CharacterTextSplitter
+from langchain.text_splitter import (
+    RecursiveCharacterTextSplitter,
+    CharacterTextSplitter,
+)
 from langchain.document_loaders import UnstructuredFileLoader, UnstructuredPDFLoader
 import os
 
@@ -28,7 +31,7 @@ import re
 from io import StringIO
 
 
-version = "03.10.23."
+version = "05.10.23. Zakon"
 st_style()
 
 
@@ -176,7 +179,7 @@ def prepare_embeddings(chunk_size, chunk_overlap):
         # define delimiter
         text_delimiter = st.text_input(
             "Unesite delimiter: ",
-            help="Prefiks se dodaje na početak teksta pre podela na delove za indeksiranje",
+            help="Delimiter se koristi za podelu dokumenta na delove za indeksiranje. Prazno za paragraf",
         )
         # define prefix
         text_prefix = st.text_input(
@@ -226,7 +229,9 @@ def prepare_embeddings(chunk_size, chunk_overlap):
 
             # Split the document into smaller parts, the separator should be the word "Chapter"
             text_splitter = CharacterTextSplitter(
-                separator=text_delimiter, chunk_size=chunk_size, chunk_overlap=chunk_overlap
+                separator=text_delimiter,
+                chunk_size=chunk_size,
+                chunk_overlap=chunk_overlap,
             )
 
             texts = text_splitter.split_documents(data)
