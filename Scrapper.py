@@ -120,7 +120,7 @@ def add_schema_data(line):
         # prakticno umesto prefix-a tj ovo je dinamicki prefix
         # if title and keyword and text:
         # st.write(f"{title}: keyword: {keyword} ->  {text}\n")
-        added_schema_data = f"Title: {title} <- Keyword: {keyword} -> Text: {text}"
+        added_schema_data = f"Title: {title} <- Keyword: {keyword} -> Text: {line}"
         return added_schema_data
     # else:
     #     st.write("No title or keyword or text")
