@@ -2,15 +2,10 @@ import streamlit as st
 
 st.set_page_config(page_title="Embeddings", page_icon="📔", layout="wide")
 import pinecone
-
 from langchain.embeddings.openai import OpenAIEmbeddings
-from langchain.text_splitter import (
-    RecursiveCharacterTextSplitter,
-    CharacterTextSplitter,
-)
-from langchain.document_loaders import UnstructuredFileLoader, UnstructuredPDFLoader
+from langchain.text_splitter import CharacterTextSplitter
+from langchain.document_loaders import UnstructuredFileLoader
 import os
-
 from myfunc.mojafunkcija import (
     st_style,
     pinecone_stats,
@@ -22,14 +17,12 @@ from tqdm.auto import tqdm
 from uuid import uuid4
 import openai
 import json
-
 import Pinecone_Utility
 import Scrapper
 import PyPDF2
 import io
 import re
 from io import StringIO
-
 
 version = "05.10.23. Zakon"
 st_style()
@@ -255,7 +248,6 @@ def prepare_embeddings(chunk_size, chunk_overlap):
                 i += 1
                 try:
                     if add_schema == "Da":
-                        st.write(document.page_content)
                         document.page_content = Scrapper.add_schema_data(
                             document.page_content
                         )
@@ -264,8 +256,6 @@ def prepare_embeddings(chunk_size, chunk_overlap):
                             f"Obrađeni tekst: {i} od {len(texts)} ", expanded=False
                         ):
                             st.write(document.page_content)
-                    else:
-                        st.write(document.page_content)
 
                 except Exception as e:
                     st.error("Prefiks nije na raspolaganju za ovaj chunk. {e}")
