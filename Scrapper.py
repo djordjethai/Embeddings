@@ -192,8 +192,8 @@ def main(chunk_size, chunk_overlap):
             placeholder = st.empty()
 
             with st.spinner(f"Scraping "):
-                # while True:
-                while i < 2:
+                while True:
+                    # while i < 2:
                     i += 1
                     if len(links) == 0:
                         st.success("URL lista je kompletirana")
