@@ -192,8 +192,8 @@ def main(chunk_size, chunk_overlap):
             placeholder = st.empty()
 
             with st.spinner(f"Scraping "):
-                while True:
-                    # while i < 1:
+                # while True:
+                while i < 2:
                     i += 1
                     if len(links) == 0:
                         st.success("URL lista je kompletirana")
@@ -260,8 +260,8 @@ def main(chunk_size, chunk_overlap):
 
                         try:
                             if add_schema == "Da":
-                                add_text = add_schema_data(texts[il])
-                                texts[il] = f"{add_text} -> Izvorni tekst: {texts[il]}"
+                                texts[il] = add_schema_data(texts[il])
+
                                 with st.expander(
                                     f"Obrađeni tekst, link: {odsto} deo: {odstol}"
                                 ):

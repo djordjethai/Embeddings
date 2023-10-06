@@ -24,7 +24,7 @@ import io
 import re
 from io import StringIO
 
-version = "05.10.23. Zakon"
+version = "06.10.23. Zakon"
 st_style()
 
 
