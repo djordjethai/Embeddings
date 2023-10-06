@@ -100,9 +100,8 @@ def add_schema_data(line):
         "properties": {
             "title": {"type": "string"},
             "keyword": {"type": "string"},
-            "text": {"type": "string"},
         },
-        "required": ["title", "keyword", "text"],
+        "required": ["title", "keyword"],
     }
 
     # moze da se ucita bilo koji fajl (ili dokument ili scrapeovan websajt recimo) kao txt ili json
@@ -115,7 +114,7 @@ def add_schema_data(line):
     for item in result:
         title = item["title"]
         keyword = item["keyword"]
-        text = item["text"]
+
         # ovo treba da postane jedan chunk, na koji se daodaju metadata i onda upsertuje u index
         # prakticno umesto prefix-a tj ovo je dinamicki prefix
         # if title and keyword and text:
