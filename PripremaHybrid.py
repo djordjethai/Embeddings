@@ -12,7 +12,7 @@ from myfunc.mojafunkcija import (
     show_logo,
 )
 import Pinecone_Utility
-import Scrapper
+import ScrapperH
 import PyPDF2
 import io
 import re
@@ -179,13 +179,13 @@ def main():
             if st.session_state.stats_button:
                 st.session_state.nesto = 4
     with col2:
-        st.write("Nije dostupno za Hybrid Embeding ")
-        # with st.form(key="screp", clear_on_submit=False):
-        #     st.session_state.screp_button = st.form_submit_button(
-        #         label="Pripremi Websajt", use_container_width=True, help="Scrape URL"
-        #     )
-        #     if st.session_state.screp_button:
-        #         st.session_state.nesto = 5
+        # st.write("Nije dostupno za Hybrid Embeding ")
+        with st.form(key="screp", clear_on_submit=False):
+            st.session_state.screp_button = st.form_submit_button(
+                label="Pripremi Websajt", use_container_width=True, help="Scrape URL"
+            )
+            if st.session_state.screp_button:
+                st.session_state.nesto = 5
     st.divider()
     phmain = st.empty()
 
@@ -204,7 +204,7 @@ def main():
             pinecone_stats(index, index_name="positive-hybrid")
     elif st.session_state.nesto == 5:
         with phmain.container():
-            Scrapper.main(chunk_size, chunk_overlap)
+            ScrapperH.main(chunk_size, chunk_overlap)
 
 
 def prepare_embeddings(chunk_size, chunk_overlap):
@@ -297,7 +297,7 @@ def prepare_embeddings(chunk_size, chunk_overlap):
                 i += 1
                 try:
                     if add_schema == "Da":
-                        document.page_content = Scrapper.add_schema_data(
+                        document.page_content = ScrapperH.add_schema_data(
                             document.page_content
                         )
 
