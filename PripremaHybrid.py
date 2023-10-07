@@ -37,6 +37,10 @@ def flatten_dict(d, parent_key="", sep="_"):
 def pinecone_stats(index, index_name):
     import pandas as pd
 
+    api_key = os.environ.get("PINECONE_API_KEY_POS")
+    env = os.environ.get("PINECONE_ENVIRONMENT_POS")
+    pinecone.init(api_key=api_key, environment=env)
+    index_name = "positive-hybrid"
     index_stats_response = index.describe_index_stats()
     index_stats_dict = index_stats_response.to_dict()
     st.subheader("Status indexa:")
