@@ -20,7 +20,8 @@ def main():
                 "Unesite indeks : ", help="Unesite ime indeksa koji želite da obrišete"
             )
             namespace = st.text_input(
-                "Unesite namespace : ", help="Unesite namespace koji želite da obrišete"
+                "Unesite namespace : ",
+                help="Unesite namespace koji želite da obrišete (prazno za sve)",
             )
             moj_filter = st.text_input(
                 "Unesite filter za source (prazno za sve) : ",
@@ -46,8 +47,14 @@ def main():
                     sys.exit()
                 else:
                     with st.spinner("Sačekajte trenutak..."):
-                        PINECONE_API_KEY = os.environ.get("PINECONE_API_KEY")
-                        PINECONE_API_ENV = os.environ.get("PINECONE_API_ENV")
+                        if index_name == "positive-hybrid":
+                            PINECONE_API_KEY = os.environ.get("PINECONE_API_KEY_POS")
+                            PINECONE_API_ENV = os.environ.get(
+                                "PINECONE_ENVIRONMENT_POS"
+                            )
+                        else:
+                            PINECONE_API_KEY = os.environ.get("PINECONE_API_KEY")
+                            PINECONE_API_ENV = os.environ.get("PINECONE_API_ENV")
                         # initialize pinecone
                         pinecone.init(
                             api_key=PINECONE_API_KEY, environment=PINECONE_API_ENV
@@ -61,8 +68,10 @@ def main():
                                     filter={"person_name": {"$in": [moj_filter]}},
                                     namespace=namespace,
                                 )
-                            else:
+                            elif not namespace == "":
                                 index.delete(delete_all=True, namespace=namespace)
+                            else:
+                                index.delete(delete_all=True)
                         except Exception as e:
                             st.error(f"Proverite ime indeksa koji ste uneli {e}")
                             sys.exit()
