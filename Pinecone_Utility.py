@@ -47,7 +47,7 @@ def main():
                     sys.exit()
                 else:
                     with st.spinner("Sačekajte trenutak..."):
-                        if index_name == "positive-hybrid":
+                        if index_name == "bis":
                             PINECONE_API_KEY = os.environ.get("PINECONE_API_KEY_POS")
                             PINECONE_API_ENV = os.environ.get(
                                 "PINECONE_ENVIRONMENT_POS"
@@ -77,5 +77,5 @@ def main():
                             sys.exit()
 
                 with col2:
-                    pinecone_stats(index)
+                    pinecone_stats(index, index_name)
                     st.write("Uspešno obrisano")

@@ -10,6 +10,9 @@ from myfunc.mojafunkcija import (
     st_style,
     positive_login,
     show_logo,
+    pinecone_stats,
+    def_chunk,
+    flatten_dict,
 )
 import Pinecone_Utility
 import ScrapperH
@@ -21,79 +24,6 @@ from pinecone_text.sparse import BM25Encoder
 
 version = "07.10.23. Hybrid"
 st_style()
-
-
-def flatten_dict(d, parent_key="", sep="_"):
-    items = []
-    for k, v in d.items():
-        new_key = f"{parent_key}{sep}{k}" if parent_key else k
-        if isinstance(v, dict):
-            items.extend(flatten_dict(v, new_key, sep=sep).items())
-        else:
-            items.append((new_key, v))
-    return dict(items)
-
-
-def pinecone_stats(index, index_name):
-    import pandas as pd
-
-    api_key = os.environ.get("PINECONE_API_KEY_POS")
-    env = os.environ.get("PINECONE_ENVIRONMENT_POS")
-    pinecone.init(api_key=api_key, environment=env)
-    index_name = "positive-hybrid"
-    index_stats_response = index.describe_index_stats()
-    index_stats_dict = index_stats_response.to_dict()
-    st.subheader("Status indexa:")
-    st.write(index_name)
-    flat_index_stats_dict = flatten_dict(index_stats_dict)
-
-    # Extract header and content from the index
-    header = [key.split("_")[0] for key in flat_index_stats_dict.keys()]
-    content = [
-        key.split("_")[1] if len(key.split("_")) > 1 else ""
-        for key in flat_index_stats_dict.keys()
-    ]
-
-    # Create a DataFrame from the extracted data
-    df = pd.DataFrame(
-        {
-            "Header": header,
-            "Content": content,
-            "Value": list(flat_index_stats_dict.values()),
-        }
-    )
-
-    # Set the desired number of decimals for float values
-    pd.options.display.float_format = "{:.2f}".format
-
-    # Apply formatting to specific columns using DataFrame.style
-    styled_df = df.style.apply(
-        lambda x: ["font-weight: bold" if i == 0 else "" for i in range(len(x))], axis=1
-    ).format({"Value": "{:.0f}"})
-
-    # Display the styled DataFrame as a table using Streamlit
-    st.write(styled_df)
-
-
-def def_chunk():
-    with st.sidebar:
-        chunk_size = st.slider(
-            "Zadati veličinu chunk-ova (200 - 8000).",
-            200,
-            8000,
-            1500,
-            step=100,
-            help="Veličina chunka određuje veličinu indeksiranog dokumenta. Veći chunk obezbeđuje bolji kontekst, dok manji chunk omogućava precizniji odgovor.",
-        )
-        chunk_overlap = st.slider(
-            "Zadati preklapanje chunk-ova (0 - 1000); vrednost mora biti manja od veličine chunk-ova.",
-            0,
-            1000,
-            0,
-            step=10,
-            help="Određuje veličinu preklapanja uzastopnih sardžaja dokumenta. U opštem slučaju, veće preklapanje će obezbediti bolji prenos konteksta.",
-        )
-        return chunk_size, chunk_overlap
 
 
 def main():
@@ -159,15 +89,15 @@ def main():
             if st.session_state.kreiraj_button:
                 st.session_state.nesto = 2
     with col4:
-        st.write("Nije dostupno za Hybrid Embeding ")
-        # with st.form(key="manage", clear_on_submit=False):
-        #     st.session_state.manage_button = st.form_submit_button(
-        #         label="Upravljaj sa Pinecone",
-        #         use_container_width=True,
-        #         help="Manipulacije sa Pinecone Indeksom",
-        #     )
-        #     if st.session_state.manage_button:
-        #         st.session_state.nesto = 3
+        # st.write("Nije dostupno za Hybrid Embeding ")
+        with st.form(key="manage", clear_on_submit=False):
+            st.session_state.manage_button = st.form_submit_button(
+                label="Upravljaj sa Pinecone",
+                use_container_width=True,
+                help="Manipulacije sa Pinecone Indeksom",
+            )
+            if st.session_state.manage_button:
+                st.session_state.nesto = 3
     with col5:
         with st.form(key="stats", clear_on_submit=False):
             index = pinecone.Index("embedings1")
@@ -200,8 +130,8 @@ def main():
             Pinecone_Utility.main()
     elif st.session_state.nesto == 4:
         with phmain.container():
-            index = pinecone.Index("positive-hybrid")
-            pinecone_stats(index, index_name="positive-hybrid")
+            index = pinecone.Index("bis")
+            pinecone_stats(index, index_name="bis")
     elif st.session_state.nesto == 5:
         with phmain.container():
             ScrapperH.main(chunk_size, chunk_overlap)
@@ -340,11 +270,14 @@ def do_embeddings():
         )
 
         # Now, you can use stored_texts as your texts
-
+        namespace = st.text_input(
+            "Unesi naziv namespace-a: ",
+            help="Naziv namespace-a je obavezan za kreiranje Pinecone Indeksa",
+        )
         submit_b2 = st.form_submit_button(
             label="Submit", help="Pokreće kreiranje Pinecone Indeksa"
         )
-        if submit_b2 and dokum:
+        if submit_b2 and dokum and namespace:
             with st.spinner("Sačekajte trenutak..."):
                 with io.open(dokum.name, "wb") as file:
                     file.write(dokum.getbuffer())
@@ -364,7 +297,7 @@ def do_embeddings():
                 api_key = os.getenv("PINECONE_API_KEY_POS")
                 env = os.getenv("PINECONE_ENVIRONMENT_POS")
                 openai_api_key = os.environ.get("OPENAI_API_KEY")
-                index_name = "positive-hybrid"
+                index_name = "bis"
 
                 pinecone.init(api_key=api_key, environment=env)
                 index = pinecone.Index(index_name)
@@ -381,7 +314,7 @@ def do_embeddings():
                     index=index,
                 )
 
-                retriever.add_texts(my_list)
+                retriever.add_texts(texts=my_list, namespace=namespace)
 
                 # gives stats about index
                 st.info("Napunjen Pinecone")
