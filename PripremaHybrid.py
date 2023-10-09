@@ -12,7 +12,6 @@ from myfunc.mojafunkcija import (
     show_logo,
     pinecone_stats,
     def_chunk,
-    flatten_dict,
 )
 import Pinecone_Utility
 import ScrapperH
@@ -326,6 +325,7 @@ def do_embeddings():
                 st.info("Napunjen Pinecone")
 
                 st.success(f"Sačuvano u Pinecone-u")
+                pinecone_stats(index, index_name)
 
 
 # Koristi se samo za deploy na streamlit.io

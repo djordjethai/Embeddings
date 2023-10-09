@@ -13,7 +13,6 @@ from myfunc.mojafunkcija import (
     pinecone_stats,
     positive_login,
     show_logo,
-    pinecone_stats,
 )
 from time import sleep
 from tqdm.auto import tqdm
@@ -157,7 +156,13 @@ def main():
     elif st.session_state.nesto == 4:
         with phmain.container():
             index = pinecone.Index("embedings1")
-            pinecone_stats(index)
+            api_key = os.getenv("PINECONE_API_KEY")
+            env = os.getenv("PINECONE_API_ENV")
+            openai_api_key = os.environ.get("OPENAI_API_KEY")
+            index_name = "bis"
+            pinecone.init(api_key=api_key, environment=env)
+            index = pinecone.Index(index_name)
+            pinecone_stats(index, index_name)
     elif st.session_state.nesto == 5:
         with phmain.container():
             Scrapper.main(chunk_size, chunk_overlap)
@@ -408,7 +413,7 @@ def do_embeddings():
             st.info("Napunjen Pinecone")
             index = pinecone.Index(index_name)
             st.success(f"Sačuvano u Pinecone-u")
-            pinecone_stats(index)
+            pinecone_stats(index, index_name)
 
 
 # Koristi se samo za deploy na streamlit.io
