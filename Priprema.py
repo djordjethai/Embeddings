@@ -159,7 +159,7 @@ def main():
             api_key = os.getenv("PINECONE_API_KEY")
             env = os.getenv("PINECONE_API_ENV")
             openai_api_key = os.environ.get("OPENAI_API_KEY")
-            index_name = "bis"
+            index_name = "embedings1"
             pinecone.init(api_key=api_key, environment=env)
             index = pinecone.Index(index_name)
             pinecone_stats(index, index_name)
