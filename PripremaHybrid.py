@@ -131,7 +131,13 @@ def main():
     elif st.session_state.nesto == 4:
         with phmain.container():
             index = pinecone.Index("bis")
-            pinecone_stats(index, index_name="bis")
+            api_key = os.getenv("PINECONE_API_KEY_POS")
+            env = os.getenv("PINECONE_ENVIRONMENT_POS")
+            openai_api_key = os.environ.get("OPENAI_API_KEY")
+            index_name = "bis"
+            pinecone.init(api_key=api_key, environment=env)
+            index = pinecone.Index(index_name)
+            pinecone_stats(index, index_name)
     elif st.session_state.nesto == 5:
         with phmain.container():
             ScrapperH.main(chunk_size, chunk_overlap)
