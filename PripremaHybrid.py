@@ -245,8 +245,8 @@ def prepare_embeddings(chunk_size, chunk_overlap):
                     st.error("Schema nije na raspolaganju za ovaj chunk. {e}")
 
                 # # Specify the file name where you want to save the data
-                content = text_prefix + " " + document.page_content
-                txt_string += content.replace("\n", "") + "\n"
+                content = text_prefix + document.page_content
+                txt_string += content.replace("\n", " ") + "\n"
 
             napisano = st.info(
                 "Tekstovi su sačuvani u TXT obliku, downloadujte ih na svoj računar"
