@@ -242,7 +242,7 @@ def prepare_embeddings(chunk_size, chunk_overlap):
                             st.write(document.page_content)
 
                 except Exception as e:
-                    st.error("Prefiks nije na raspolaganju za ovaj chunk. {e}")
+                    st.error("Schema nije na raspolaganju za ovaj chunk. {e}")
 
                 # # Specify the file name where you want to save the data
                 content = text_prefix + " " + document.page_content
