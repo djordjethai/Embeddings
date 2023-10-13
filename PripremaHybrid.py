@@ -21,7 +21,7 @@ import re
 from langchain.retrievers import PineconeHybridSearchRetriever
 from pinecone_text.sparse import BM25Encoder
 
-version = "09.10.23. Hybrid"
+version = "09.10.23. Hybrid Space"
 st_style()
 
 
