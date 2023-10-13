@@ -245,7 +245,7 @@ def prepare_embeddings(chunk_size, chunk_overlap):
                     st.error("Prefiks nije na raspolaganju za ovaj chunk. {e}")
 
                 # # Specify the file name where you want to save the data
-                content = text_prefix + document.page_content
+                content = text_prefix + " " + document.page_content
                 txt_string += content.replace("\n", "") + "\n"
 
             napisano = st.info(
