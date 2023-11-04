@@ -8,32 +8,56 @@ from langchain.document_loaders import UnstructuredFileLoader
 import os
 from myfunc.mojafunkcija import (
     st_style,
+    pinecone_stats,
     positive_login,
     show_logo,
-    pinecone_stats,
-    def_chunk,
 )
+from time import sleep
+from tqdm.auto import tqdm
+from uuid import uuid4
+import openai
+import json
 import Pinecone_Utility
-import ScrapperH
+import Scrapper
 import PyPDF2
 import io
 import re
-from langchain.retrievers import PineconeHybridSearchRetriever
-from pinecone_text.sparse import BM25Encoder
+from io import StringIO
 
-version = "09.10.23. Hybrid Space"
+version = "14.10.23. Self Query"
 st_style()
+
+
+def def_chunk():
+    with st.sidebar:
+        chunk_size = st.slider(
+            "Zadati veličinu chunk-ova (200 - 8000).",
+            200,
+            8000,
+            1500,
+            step=100,
+            help="Veličina chunka određuje veličinu indeksiranog dokumenta. Veći chunk obezbeđuje bolji kontekst, dok manji chunk omogućava precizniji odgovor.",
+        )
+        chunk_overlap = st.slider(
+            "Zadati preklapanje chunk-ova (0 - 1000); vrednost mora biti manja od veličine chunk-ova.",
+            0,
+            1000,
+            0,
+            step=10,
+            help="Određuje veličinu preklapanja uzastopnih sardžaja dokumenta. U opštem slučaju, veće preklapanje će obezbediti bolji prenos konteksta.",
+        )
+        return chunk_size, chunk_overlap
 
 
 def main():
     show_logo()
     chunk_size, chunk_overlap = def_chunk()
-    chunk_size = 50
+
     st.markdown(
         f"<p style='font-size: 10px; color: grey;'>{version}</p>",
         unsafe_allow_html=True,
     )
-    st.subheader("Izaberite operaciju za Embeding HYBRID Method")
+    st.subheader("Izaberite operaciju za Embeding")
     with st.expander("Pročitajte uputstvo:"):
         st.caption(
             """
@@ -88,7 +112,6 @@ def main():
             if st.session_state.kreiraj_button:
                 st.session_state.nesto = 2
     with col4:
-        # st.write("Nije dostupno za Hybrid Embeding ")
         with st.form(key="manage", clear_on_submit=False):
             st.session_state.manage_button = st.form_submit_button(
                 label="Upravljaj sa Pinecone",
@@ -108,7 +131,6 @@ def main():
             if st.session_state.stats_button:
                 st.session_state.nesto = 4
     with col2:
-        # st.write("Nije dostupno za Hybrid Embeding ")
         with st.form(key="screp", clear_on_submit=False):
             st.session_state.screp_button = st.form_submit_button(
                 label="Pripremi Websajt", use_container_width=True, help="Scrape URL"
@@ -129,17 +151,17 @@ def main():
             Pinecone_Utility.main()
     elif st.session_state.nesto == 4:
         with phmain.container():
-            index = pinecone.Index("bis")
-            api_key = os.getenv("PINECONE_API_KEY_POS")
-            env = os.getenv("PINECONE_ENVIRONMENT_POS")
+            index = pinecone.Index("embedings1")
+            api_key = os.getenv("PINECONE_API_KEY")
+            env = os.getenv("PINECONE_API_ENV")
             openai_api_key = os.environ.get("OPENAI_API_KEY")
-            index_name = "bis"
+            index_name = "embedings1"
             pinecone.init(api_key=api_key, environment=env)
             index = pinecone.Index(index_name)
             pinecone_stats(index, index_name)
     elif st.session_state.nesto == 5:
         with phmain.container():
-            ScrapperH.main(chunk_size, chunk_overlap)
+            Scrapper.main(chunk_size, chunk_overlap)
 
 
 def prepare_embeddings(chunk_size, chunk_overlap):
@@ -159,23 +181,14 @@ def prepare_embeddings(chunk_size, chunk_overlap):
             help="Delimiter se koristi za podelu dokumenta na delove za indeksiranje. Prazno za paragraf",
         )
         # define prefix
-        text_prefix = st.text_input(
-            "Unesite prefiks za tekst: ",
-            help="Prefiks se dodaje na početak teksta pre podela na delove za indeksiranje",
-        )
-        add_schema = st.radio(
-            "Da li želite da dodate Schema Data (može značajno produžiti vreme potrebno za kreiranje): ",
-            ("Da", "Ne"),
-            key="add_schema_doc",
-            help="Schema Data se dodaje na početak teksta",
-        )
+
         st.session_state.submit_b = st.form_submit_button(
             label="Submit",
             help="Pokreće podelu dokumenta na delove za indeksiranje",
         )
         st.info(f"Chunk veličina: {chunk_size}, chunk preklapanje: {chunk_overlap}")
-        if len(text_prefix) > 0:
-            text_prefix = text_prefix + " "
+        # if len(text_prefix) > 0:
+        #     text_prefix = text_prefix + " "
 
         if dokum is not None and st.session_state.submit_b == True:
             with io.open(dokum.name, "wb") as file:
@@ -213,50 +226,44 @@ def prepare_embeddings(chunk_size, chunk_overlap):
 
             texts = text_splitter.split_documents(data)
 
-            #
-            ###############
-            #
-            # dodati mogucnost za prefix i sufix na embeddinge
-            #
-            ###############
-            # # Ask the user if they want to do OpenAI embeddings
-
-            # # Create the OpenAI embeddings
+            # Create the OpenAI embeddings
             st.write(f"Učitano {len(texts)} tekstova")
 
             # Define a custom method to convert Document to a JSON-serializable format
-            txt_string = ""
+            output_json_list = []
             # Loop through the Document objects and convert them to JSON
-            i = 0
+
             for document in texts:
-                i += 1
-                try:
-                    if add_schema == "Da":
-                        document.page_content = ScrapperH.add_schema_data(
-                            document.page_content
-                        )
+                output_dict = {
+                    "id": str(uuid4()),
+                    "text": document.page_content,
+                    "source": document.metadata.get("source", ""),
+                    "title": "some title",
+                    "keyword": "some keyword",
+                }
+                output_json_list.append(output_dict)
 
-                        with st.expander(
-                            f"Obrađeni tekst: {i} od {len(texts)} ", expanded=False
-                        ):
-                            st.write(document.page_content)
+            # # Specify the file name where you want to save the JSON data
+            json_string = (
+                "["
+                + ",\n".join(
+                    json.dumps(d, ensure_ascii=False) for d in output_json_list
+                )
+                + "]"
+            )
 
-                except Exception as e:
-                    st.error("Schema nije na raspolaganju za ovaj chunk. {e}")
-
-                # # Specify the file name where you want to save the data
-                content = text_prefix + document.page_content
-                txt_string += content.replace("\n", " ") + "\n"
+            # Now, json_string contains the JSON data as a string
 
             napisano = st.info(
-                "Tekstovi su sačuvani u TXT obliku, downloadujte ih na svoj računar"
+                "Tekstovi su sačuvani u JSON obliku, downloadujte ih na svoj računar"
             )
 
     if napisano:
         skinuto = st.download_button(
-            "Download TXT",
-            txt_string,
-            file_name=f"hybrid_{dokum.name}.txt",
+            "Download JSON",
+            data=json_string,
+            file_name=f"{dokum.name}.json",
+            mime="application/json",
         )
     if skinuto:
         st.success(f"Tekstovi sačuvani na {file_name} su sada spremni za Embeding")
@@ -269,12 +276,13 @@ def do_embeddings():
         chunks = []
         dokum = st.file_uploader(
             "Izaberite dokument/e",
-            key="upload_txt_file",
-            type=[".txt"],
+            key="upload_json_file",
+            type=[".json"],
             help="Izaberite dokument koji ste podelili na delove za indeksiranje",
         )
 
         # Now, you can use stored_texts as your texts
+        # with st.form(key="my_form2", clear_on_submit=False):
         namespace = st.text_input(
             "Unesi naziv namespace-a: ",
             help="Naziv namespace-a je obavezan za kreiranje Pinecone Indeksa",
@@ -283,49 +291,107 @@ def do_embeddings():
             label="Submit", help="Pokreće kreiranje Pinecone Indeksa"
         )
         if submit_b2 and dokum and namespace:
-            with st.spinner("Sačekajte trenutak..."):
-                with io.open(dokum.name, "wb") as file:
-                    file.write(dokum.getbuffer())
+            stringio = StringIO(dokum.getvalue().decode("utf-8"))
 
-                file = dokum.getbuffer()
+            # To read file as string:
+            file = stringio.read()
+            json_string = json.dumps(json.loads(file), ensure_ascii=False)
+            data = json.loads(json_string)
+            with st.expander("Prikaži tekstove", expanded=False):
+                st.write(data)
 
-                # Initialize an empty list
-                my_list = []
+            # file = dokum.getbuffer()
+            for line in data:
+                # Remove leading/trailing whitespace and add to the list
+                chunks.append(line)
+            # Initialize OpenAI and Pinecone API key
+            OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+            PINECONE_API_KEY = os.environ.get("PINECONE_API_KEY")
+            PINECONE_API_ENV = os.environ.get("PINECONE_API_ENV")
 
-                # Read the text file and split it into a list of lines
-                with open(dokum.name, "r", encoding="utf-8") as file:
-                    my_list = file.read().splitlines()
-                with st.expander("Prikaži tekstove", expanded=False):
-                    st.write(my_list)
+            # initializing openai and pinecone
+            embeddings = OpenAIEmbeddings(openai_api_key=OPENAI_API_KEY)
+            pinecone.init(api_key=PINECONE_API_KEY, environment=PINECONE_API_ENV)
+            index_name = "embedings1"
 
-                # Initialize OpenAI and Pinecone API key
-                api_key = os.getenv("PINECONE_API_KEY_POS")
-                env = os.getenv("PINECONE_ENVIRONMENT_POS")
-                openai_api_key = os.environ.get("OPENAI_API_KEY")
-                index_name = "bis"
+            # # embedding start !!!
 
-                pinecone.init(api_key=api_key, environment=env)
-                index = pinecone.Index(index_name)
-                embeddings = OpenAIEmbeddings()
+            # Set the embedding model name
+            embed_model = "text-embedding-ada-002"
 
-                # upsert data
-                bm25_encoder = BM25Encoder()
-                # fit tf-idf values on your corpus
-                bm25_encoder.fit(my_list)
+            # Set the index name and namespace
+            index_name = "embedings1"
+            # Initialize the Pinecone index
+            index = pinecone.Index(index_name)
+            batch_size = 100  # how many embeddings we create and insert at once
+            progress_text2 = "Insertovanje u Pinecone je u toku."
+            progress_bar2 = st.progress(0.0, text=progress_text2)
 
-                retriever = PineconeHybridSearchRetriever(
-                    embeddings=embeddings,
-                    sparse_encoder=bm25_encoder,
-                    index=index,
-                )
+            # Now, 'data' contains the contents of the JSON file as a Python data structure (usually a dictionary or a list, depending on the JSON structure)
+            # You can access the data and work with it as needed
 
-                retriever.add_texts(texts=my_list, namespace=namespace)
+            # For example, if 'data' is a list of dictionaries, you can iterate through it like this:
 
-                # gives stats about index
-                st.info("Napunjen Pinecone")
+            ph2 = st.empty()
+            for i in tqdm(range(0, len(data), batch_size)):
+                # find end of batch
+                i_end = min(len(chunks), i + batch_size)
+                meta_batch = data[i:i_end]
 
-                st.success(f"Sačuvano u Pinecone-u")
-                pinecone_stats(index, index_name)
+                # get texts to encode
+                ids_batch = [x["id"] for x in meta_batch]
+                texts = [x["text"] for x in meta_batch]
+
+                # create embeddings (try-except added to avoid RateLimitError)
+                try:
+                    res = openai.Embedding.create(input=texts, engine=embed_model)
+
+                except:
+                    done = False
+                    while not done:
+                        sleep(5)
+                        try:
+                            res = openai.Embedding.create(
+                                input=texts, engine=embed_model
+                            )
+                            done = True
+
+                        except:
+                            pass
+
+                # cleanup metadata
+
+                cleaned_meta_batch = []  # To store records without [nan] embeddings
+                embeds = [record["embedding"] for record in res["data"]]
+
+                # Check for [nan] embeddings
+
+                if embeds:
+                    to_upsert = list(zip(ids_batch, embeds, meta_batch))
+                else:
+                    err_log += f"Greška: {meta_batch}\n"
+                # upsert to Pinecone
+                err_log += f"Upserting {len(to_upsert)} embeddings\n"
+                with open("err_log.txt", "w", encoding="utf-8") as file:
+                    file.write(err_log)
+                index.upsert(vectors=to_upsert, namespace=namespace)
+                stodva = len(data)
+                if i_end > i:
+                    deo = i_end
+                else:
+                    deo = i
+                progress = deo / stodva
+                l = int(deo / stodva * 100)
+
+                ph2.text(f"Učitano je {deo} od {stodva} linkova što je {l} %")
+
+                progress_bar2.progress(progress, text=progress_text2)
+
+            # gives stats about index
+            st.info("Napunjen Pinecone")
+            index = pinecone.Index(index_name)
+            st.success(f"Sačuvano u Pinecone-u")
+            pinecone_stats(index, index_name)
 
 
 # Koristi se samo za deploy na streamlit.io

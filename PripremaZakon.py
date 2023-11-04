@@ -32,7 +32,7 @@ def def_chunk():
     with st.sidebar:
         chunk_size = st.slider(
             "Zadati veličinu chunk-ova (200 - 8000).",
-            200,
+            50,
             8000,
             1500,
             step=100,
