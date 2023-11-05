@@ -28,7 +28,7 @@ import re
 from io import StringIO
 
 
-version = "09.10.23."
+version = "05.11.23. (Streamlit, Pinecone, LangChain)"
 st_style()
 
 
