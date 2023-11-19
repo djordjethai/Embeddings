@@ -21,14 +21,14 @@ import re
 from langchain.retrievers import PineconeHybridSearchRetriever
 from pinecone_text.sparse import BM25Encoder
 
-version = "09.10.23. Hybrid Space"
+version = "14.11.23. Hybrid"
 st_style()
 
 
 def main():
     show_logo()
     chunk_size, chunk_overlap = def_chunk()
-    chunk_size = 50
+    #chunk_size = 50
     st.markdown(
         f"<p style='font-size: 10px; color: grey;'>{version}</p>",
         unsafe_allow_html=True,
@@ -129,11 +129,11 @@ def main():
             Pinecone_Utility.main()
     elif st.session_state.nesto == 4:
         with phmain.container():
-            index = pinecone.Index("bis")
+            index = pinecone.Index("positive")
             api_key = os.getenv("PINECONE_API_KEY_POS")
             env = os.getenv("PINECONE_ENVIRONMENT_POS")
             openai_api_key = os.environ.get("OPENAI_API_KEY")
-            index_name = "bis"
+            index_name = "positive"
             pinecone.init(api_key=api_key, environment=env)
             index = pinecone.Index(index_name)
             pinecone_stats(index, index_name)
@@ -271,6 +271,7 @@ def do_embeddings():
             "Izaberite dokument/e",
             key="upload_txt_file",
             type=[".txt"],
+           
             help="Izaberite dokument koji ste podelili na delove za indeksiranje",
         )
 
@@ -302,7 +303,7 @@ def do_embeddings():
                 api_key = os.getenv("PINECONE_API_KEY_POS")
                 env = os.getenv("PINECONE_ENVIRONMENT_POS")
                 openai_api_key = os.environ.get("OPENAI_API_KEY")
-                index_name = "bis"
+                index_name = "positive"
 
                 pinecone.init(api_key=api_key, environment=env)
                 index = pinecone.Index(index_name)

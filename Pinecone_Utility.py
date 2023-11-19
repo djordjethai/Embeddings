@@ -47,7 +47,7 @@ def main():
                     sys.exit()
                 else:
                     with st.spinner("Sačekajte trenutak..."):
-                        if index_name == "bis":
+                        if index_name == "positive":
                             PINECONE_API_KEY = os.environ.get("PINECONE_API_KEY_POS")
                             PINECONE_API_ENV = os.environ.get(
                                 "PINECONE_ENVIRONMENT_POS"
