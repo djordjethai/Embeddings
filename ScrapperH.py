@@ -47,6 +47,7 @@ def scrape(url: str):
             href = link["href"]
             base_url, extension = os.path.splitext(href)
             if not extension and not "mailto" in href and not "tel" in href:
+          
                 local_links.append(urljoin(sajt, href))
 
                 # Find the main content using CSS selectors
