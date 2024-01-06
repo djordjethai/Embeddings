@@ -19,6 +19,7 @@ from tqdm.auto import tqdm
 from uuid import uuid4
 import openai
 import json
+import datetime
 
 import Pinecone_Utility
 import Scrapper
@@ -257,11 +258,13 @@ def prepare_embeddings(chunk_size, chunk_overlap):
                             st.write(document.page_content)
 
                 except Exception as e:
-                    st.error("Prefiks nije na raspolaganju za ovaj chunk. {e}")
+                    st.error(f"Schema nije na raspolaganju za ovaj chunk. {e}")
                 output_dict = {
                     "id": str(uuid4()),
+                    "chunk": i,
                     "text": text_prefix + document.page_content,
                     "source": document.metadata.get("source", ""),
+                    "date": datetime.datetime.now().strftime("%d.%m.%Y")
                 }
                 output_json_list.append(output_dict)
 
@@ -281,10 +284,11 @@ def prepare_embeddings(chunk_size, chunk_overlap):
             )
 
     if napisano:
+        file_name = os.path.splitext(dokum.name)[0]
         skinuto = st.download_button(
             "Download JSON",
             data=json_string,
-            file_name=f"{dokum.name}.json",
+            file_name=f"{file_name}.json",
             mime="application/json",
         )
     if skinuto:
@@ -326,6 +330,8 @@ def do_embeddings():
             for line in data:
                 # Remove leading/trailing whitespace and add to the list
                 chunks.append(line)
+            
+            
             # Initialize OpenAI and Pinecone API key
             OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
             PINECONE_API_KEY = os.environ.get("PINECONE_API_KEY")

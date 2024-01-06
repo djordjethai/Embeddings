@@ -20,6 +20,10 @@ import io
 import re
 from langchain.retrievers import PineconeHybridSearchRetriever
 from pinecone_text.sparse import BM25Encoder
+import datetime
+import json
+from uuid import uuid4
+from io import StringIO
 
 version = "14.11.23. Hybrid"
 st_style()
@@ -213,19 +217,12 @@ def prepare_embeddings(chunk_size, chunk_overlap):
 
             texts = text_splitter.split_documents(data)
 
-            #
-            ###############
-            #
-            # dodati mogucnost za prefix i sufix na embeddinge
-            #
-            ###############
-            # # Ask the user if they want to do OpenAI embeddings
 
             # # Create the OpenAI embeddings
             st.write(f"Učitano {len(texts)} tekstova")
 
             # Define a custom method to convert Document to a JSON-serializable format
-            txt_string = ""
+            output_json_list = []
             # Loop through the Document objects and convert them to JSON
             i = 0
             for document in texts:
@@ -245,18 +242,37 @@ def prepare_embeddings(chunk_size, chunk_overlap):
                     st.error("Schema nije na raspolaganju za ovaj chunk. {e}")
 
                 # # Specify the file name where you want to save the data
-                content = text_prefix + document.page_content
-                txt_string += content.replace("\n", " ") + "\n"
+                output_dict = {
+                    "id": str(uuid4()),
+                    "chunk": i,
+                    "text": text_prefix + document.page_content,
+                    "source": document.metadata.get("source", ""),
+                    "date": datetime.datetime.now().strftime("%d.%m.%Y")
+                }
+                output_json_list.append(output_dict)
+
+            # # Specify the file name where you want to save the JSON data
+            json_string = (
+                "["
+                + ",\n".join(
+                    json.dumps(d, ensure_ascii=False) for d in output_json_list
+                )
+                + "]"
+            )
+
+            # Now, json_string contains the JSON data as a string
 
             napisano = st.info(
-                "Tekstovi su sačuvani u TXT obliku, downloadujte ih na svoj računar"
+                "Tekstovi su sačuvani u JSON obliku, downloadujte ih na svoj računar"
             )
 
     if napisano:
+        file_name = os.path.splitext(dokum.name)[0]
         skinuto = st.download_button(
-            "Download TXT",
-            txt_string,
-            file_name=f"hybrid_{dokum.name}.txt",
+            "Download JSON",
+            data=json_string,
+            file_name=f"{file_name}.json",
+            mime="application/json",
         )
     if skinuto:
         st.success(f"Tekstovi sačuvani na {file_name} su sada spremni za Embeding")
@@ -269,13 +285,13 @@ def do_embeddings():
         chunks = []
         dokum = st.file_uploader(
             "Izaberite dokument/e",
-            key="upload_txt_file",
-            type=[".txt"],
-           
+            key="upload_json_file",
+            type=[".json"],
             help="Izaberite dokument koji ste podelili na delove za indeksiranje",
         )
 
         # Now, you can use stored_texts as your texts
+        # with st.form(key="my_form2", clear_on_submit=False):
         namespace = st.text_input(
             "Unesi naziv namespace-a: ",
             help="Naziv namespace-a je obavezan za kreiranje Pinecone Indeksa",
@@ -284,49 +300,52 @@ def do_embeddings():
             label="Submit", help="Pokreće kreiranje Pinecone Indeksa"
         )
         if submit_b2 and dokum and namespace:
-            with st.spinner("Sačekajte trenutak..."):
-                with io.open(dokum.name, "wb") as file:
-                    file.write(dokum.getbuffer())
+            stringio = StringIO(dokum.getvalue().decode("utf-8"))
 
-                file = dokum.getbuffer()
+            # Directly load the JSON data from file content
+            data = json.load(stringio)
 
-                # Initialize an empty list
-                my_list = []
+            # Initialize lists outside the loop
+            my_list = []
+            my_meta = []
 
-                # Read the text file and split it into a list of lines
-                with open(dokum.name, "r", encoding="utf-8") as file:
-                    my_list = file.read().splitlines()
-                with st.expander("Prikaži tekstove", expanded=False):
-                    st.write(my_list)
+            # Process each JSON object in the data
+            for item in data:
+                # Append the text to my_list
+                my_list.append(item['text'])
+    
+                # Append other data to my_meta
+                meta_data = {key: value for key, value in item.items() if key != 'text'}
+                my_meta.append(meta_data)
+                
+            # Initialize OpenAI and Pinecone API key
+            api_key = os.getenv("PINECONE_API_KEY_POS")
+            env = os.getenv("PINECONE_ENVIRONMENT_POS")
+            openai_api_key = os.environ.get("OPENAI_API_KEY")
+            index_name = "positive"
 
-                # Initialize OpenAI and Pinecone API key
-                api_key = os.getenv("PINECONE_API_KEY_POS")
-                env = os.getenv("PINECONE_ENVIRONMENT_POS")
-                openai_api_key = os.environ.get("OPENAI_API_KEY")
-                index_name = "positive"
+            pinecone.init(api_key=api_key, environment=env)
+            index = pinecone.Index(index_name)
+            embeddings = OpenAIEmbeddings()
 
-                pinecone.init(api_key=api_key, environment=env)
-                index = pinecone.Index(index_name)
-                embeddings = OpenAIEmbeddings()
+            # upsert data
+            bm25_encoder = BM25Encoder()
+            # fit tf-idf values on your corpus
+            bm25_encoder.fit(my_list)
 
-                # upsert data
-                bm25_encoder = BM25Encoder()
-                # fit tf-idf values on your corpus
-                bm25_encoder.fit(my_list)
+            retriever = PineconeHybridSearchRetriever(
+                embeddings=embeddings,
+                sparse_encoder=bm25_encoder,
+                index=index,
+            )
 
-                retriever = PineconeHybridSearchRetriever(
-                    embeddings=embeddings,
-                    sparse_encoder=bm25_encoder,
-                    index=index,
-                )
+            retriever.add_texts(texts=my_list, metadatas=my_meta, namespace=namespace)
 
-                retriever.add_texts(texts=my_list, namespace=namespace)
+            # gives stats about index
+            st.info("Napunjen Pinecone")
 
-                # gives stats about index
-                st.info("Napunjen Pinecone")
-
-                st.success(f"Sačuvano u Pinecone-u")
-                pinecone_stats(index, index_name)
+            st.success(f"Sačuvano u Pinecone-u")
+            pinecone_stats(index, index_name)
 
 
 # Koristi se samo za deploy na streamlit.io

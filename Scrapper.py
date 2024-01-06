@@ -19,6 +19,7 @@ from myfunc.mojafunkcija import st_style
 import json
 from langchain.chat_models import ChatOpenAI
 from langchain.chains import create_extraction_chain
+import datetime
 
 st_style()
 
@@ -274,6 +275,7 @@ def main(chunk_size, chunk_overlap):
                                 "id": str(uuid4()),
                                 "text": f"{text_prefix}  {texts[il]}",
                                 "source": record["url"],
+                                "date": datetime.datetime.now().strftime("%d.%m.%Y")
                             }
                         )
 

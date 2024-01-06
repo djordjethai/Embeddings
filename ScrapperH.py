@@ -16,6 +16,9 @@ import streamlit as st
 from myfunc.mojafunkcija import st_style
 from langchain.chat_models import ChatOpenAI
 from langchain.chains import create_extraction_chain
+import datetime
+import json
+from uuid import uuid4
 
 st_style()
 
@@ -222,7 +225,7 @@ def main(chunk_size, chunk_overlap):
                 text_splitter = RecursiveCharacterTextSplitter(
                     chunk_size=chunk_size, chunk_overlap=chunk_overlap
                 )
-            txt_string = ""
+            chunks = []
 
             progress_text = "Podaci za Embeding se trenutno kreiraju. Molimo sačekajte."
 
@@ -266,18 +269,32 @@ def main(chunk_size, chunk_overlap):
                                     st.write(texts[il])
                         except Exception as e:
                             st.error("Prefiks nije na raspolaganju za ovaj chunk.")
+                        chunks.append(
+                            {
+                                "id": str(uuid4()),
+                                "text": f"{text_prefix}  {texts[il]}",
+                                "source": record["url"],
+                                "date": datetime.datetime.now().strftime("%d.%m.%Y")
+                            }
+                        )
 
-                        # Loop through the Document objects and convert them to JSON
+                    # Generate JSON strings for each chunk and join them with newline characters
+                    json_strings = [
+                        json.dumps(chunk, ensure_ascii=False) for chunk in chunks
+                    ]
+                    json_string = ",\n".join(json_strings)
 
-                        # # Specify the file name where you want to save the data
-                        content = text_prefix + texts[il]
-                        txt_string += content.replace("\n", "") + "\n"
+                    # Add "[" at the beginning and "]" at the end of the entire JSON string
+                    json_string = "[" + json_string + "]"
+                    # Assuming 'chunks' is your list of dictionaries
 
-            napisano = st.info(
-                "Tekstovi su sačuvani u TXT obliku, downloadujte ih na svoj računar"
-            )
+                    # Now, json_string contains the JSON data as a string
 
-            # Specify the file name where you want to save the JSON data
+                    napisano = st.info(
+                        "Tekstovi su sačuvani u JSON obliku, downloadujte ih na svoj računar"
+                    )
+
+                    # Specify the file name where you want to save the JSON data
 
     parsed_url = urlparse(sajt)
     # Get the netloc (which includes the website name)
@@ -291,9 +308,10 @@ def main(chunk_size, chunk_overlap):
 
     if napisano:
         skinuto = st.download_button(
-            "Download TXT",
-            txt_string,
-            file_name=f"hybrid_{website_name}.txt",
+            "Download JSON",
+            data=json_string,
+            file_name=f"{website_name}.json",
+            mime="application/json",
         )
     if skinuto:
         st.success(f"Tekstovi sačuvani na {file_name} su sada spremni za Embeding")
