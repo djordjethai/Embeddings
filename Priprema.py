@@ -31,7 +31,7 @@ from io import StringIO
 
 version = "05.11.23. (Streamlit, Pinecone, LangChain)"
 st_style()
-
+client=(openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY")))
 
 def def_chunk():
     with st.sidebar:
@@ -327,9 +327,9 @@ def do_embeddings():
                 st.write(data)
 
             # file = dokum.getbuffer()
-            for line in data:
-                # Remove leading/trailing whitespace and add to the list
-                chunks.append(line)
+            # for line in data:
+            #     # Remove leading/trailing whitespace and add to the list
+            #     chunks.append(line)
             
             
             # Initialize OpenAI and Pinecone API key
@@ -347,8 +347,7 @@ def do_embeddings():
             # Set the embedding model name
             embed_model = "text-embedding-ada-002"
 
-            # Set the index name and namespace
-            index_name = "embedings1"
+           
             # Initialize the Pinecone index
             index = pinecone.Index(index_name)
             batch_size = 100  # how many embeddings we create and insert at once
@@ -361,40 +360,40 @@ def do_embeddings():
             # For example, if 'data' is a list of dictionaries, you can iterate through it like this:
 
             ph2 = st.empty()
+            
             for i in tqdm(range(0, len(data), batch_size)):
                 # find end of batch
-                i_end = min(len(chunks), i + batch_size)
+                i_end = min(len(data), i + batch_size)
                 meta_batch = data[i:i_end]
 
                 # get texts to encode
                 ids_batch = [x["id"] for x in meta_batch]
                 texts = [x["text"] for x in meta_batch]
-
+                
                 # create embeddings (try-except added to avoid RateLimitError)
                 try:
-                    res = openai.Embedding.create(input=texts, engine=embed_model)
+                    res = client.embeddings.create(input=texts, model=embed_model)
 
-                except:
+                except Exception as e:
                     done = False
+                    print(e)
                     while not done:
                         sleep(5)
                         try:
-                            res = openai.Embedding.create(
-                                input=texts, engine=embed_model
-                            )
+                            res = client.embeddings.create(input=texts, model=embed_model)
                             done = True
 
                         except:
                             pass
 
-                # cleanup metadata
-
+                
                 cleaned_meta_batch = []  # To store records without [nan] embeddings
-                embeds = [record["embedding"] for record in res["data"]]
+                embeds = [item.embedding for item in res.data]
 
                 # Check for [nan] embeddings
-
-                if embeds:
+              
+                if len(embeds) > 0:
+                    
                     to_upsert = list(zip(ids_batch, embeds, meta_batch))
                 else:
                     err_log += f"Greška: {meta_batch}\n"
@@ -402,6 +401,8 @@ def do_embeddings():
                 err_log += f"Upserting {len(to_upsert)} embeddings\n"
                 with open("err_log.txt", "w", encoding="utf-8") as file:
                     file.write(err_log)
+                
+                print("upsert")    
                 index.upsert(vectors=to_upsert, namespace=namespace)
                 stodva = len(data)
                 if i_end > i:
