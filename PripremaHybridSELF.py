@@ -13,6 +13,7 @@ from myfunc.mojafunkcija import (
     pinecone_stats,
     def_chunk,
 )
+import random
 import Pinecone_Utility
 import ScrapperH
 import PyPDF2
@@ -224,32 +225,28 @@ def prepare_embeddings(chunk_size, chunk_overlap):
             # Define a custom method to convert Document to a JSON-serializable format
             output_json_list = []
             # Loop through the Document objects and convert them to JSON
+            # Define your lists
+            names = ["Miljan", "Goran", "Darko", "Nemanja"]
+            topics = ["RAG indeksi", "AI asistenti", "Epic", "Positive doo"]
+
             i = 0
             for document in texts:
                 i += 1
-                try:
-                    if add_schema == "Da":
-                        document.page_content = ScrapperH.add_schema_data(
-                            document.page_content
-                        )
+                
+                # Randomly assign a name and a topic
+                person_name = random.choice(names)
+                topic = random.choice(topics)
 
-                        with st.expander(
-                            f"Obrađeni tekst: {i} od {len(texts)} ", expanded=False
-                        ):
-                            st.write(document.page_content)
-
-                except Exception as e:
-                    st.error("Schema nije na raspolaganju za ovaj chunk. {e}")
-
-                # # Specify the file name where you want to save the data
-                    output_dict = {
-                        "id": str(uuid4()),
-                        "chunk": i,
-                        "text": text_prefix + document.page_content,
-                        "source": document.metadata.get("source", ""),
-                        "date": datetime.datetime.now().strftime("%d.%m.%Y")
-                    }
-                    output_json_list.append(output_dict)
+                output_dict = {
+                    "id": str(uuid4()),
+                    "chunk": i,
+                    "text": text_prefix + document.page_content,
+                    "source": document.metadata.get("source", ""),
+                    "date": datetime.datetime.now().strftime("%d.%m.%Y"),
+                    "person_name": person_name,
+                    "topic": topic,
+                }
+                output_json_list.append(output_dict)
 
             # # Specify the file name where you want to save the JSON data
             json_string = (
