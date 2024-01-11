@@ -6,6 +6,7 @@
 *.pdf
 *.docx
 .vsidx
+.vs
 .wsuo
 *.csv
 *.xlsx
