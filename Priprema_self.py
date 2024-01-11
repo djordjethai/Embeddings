@@ -4,7 +4,7 @@ st.set_page_config(page_title="Embeddings", page_icon="📔", layout="wide")
 import pinecone
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.text_splitter import CharacterTextSplitter
-from langchain.document_loaders import UnstructuredFileLoader
+from langchain_community.document_loaders import UnstructuredFileLoader
 import os
 from myfunc.mojafunkcija import (
     st_style,

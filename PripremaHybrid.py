@@ -4,7 +4,7 @@ st.set_page_config(page_title="Embeddings", page_icon="📔", layout="wide")
 import pinecone
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.text_splitter import CharacterTextSplitter
-from langchain.document_loaders import UnstructuredFileLoader
+from langchain_community.document_loaders import UnstructuredFileLoader
 import os
 from myfunc.mojafunkcija import (
     st_style,
@@ -18,7 +18,7 @@ import ScrapperH
 import PyPDF2
 import io
 import re
-from langchain.retrievers import PineconeHybridSearchRetriever
+from langchain_community.retrievers import PineconeHybridSearchRetriever
 from pinecone_text.sparse import BM25Encoder
 import datetime
 import json

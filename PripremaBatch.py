@@ -1,5 +1,5 @@
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.document_loaders import UnstructuredFileLoader
+from langchain_community.document_loaders import UnstructuredFileLoader
 import os
 from uuid import uuid4
 import json
@@ -52,8 +52,8 @@ def prepare_embeddings(chunk_size, chunk_overlap, folder_path, output):
         file.write("]")  # Closing bracket
     print(f"json file created {output_file}")
 # Call the function with the desired parameters
-prepare_embeddings(600, 0, "C:\\Users\\djordje\\Desktop\\Zapisnici\\Sredjen\\", "Kratki")
-prepare_embeddings(2500, 0, "C:\\Users\\djordje\\Desktop\\Zapisnici\\Sredjen\\", "Dugacki")
+# prepare_embeddings(600, 0, "C:\\Users\\djordje\\Desktop\\Zapisnici\\Sredjen\\", "Kratki")
+prepare_embeddings(3500, 0, "C:\\Users\\djordje\\Desktop\\Zapisnici\\Summary\\", "Summary")
 
 
 # sta raditi 

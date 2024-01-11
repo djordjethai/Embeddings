@@ -5,7 +5,7 @@ import pinecone
 
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.document_loaders import UnstructuredFileLoader, UnstructuredPDFLoader
+from langchain_community.document_loaders import UnstructuredFileLoader, UnstructuredPDFLoader
 import os
 
 from myfunc.mojafunkcija import (

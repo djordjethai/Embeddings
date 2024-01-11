@@ -14,8 +14,8 @@ from bs4 import BeautifulSoup
 import sys
 import streamlit as st
 from myfunc.mojafunkcija import st_style
-from langchain.chat_models import ChatOpenAI
-from langchain.chains import create_extraction_chain
+from langchain_openai.chat_models import ChatOpenAI
+from langchain.chains.openai_functions import create_extraction_chain
 import datetime
 import json
 from uuid import uuid4

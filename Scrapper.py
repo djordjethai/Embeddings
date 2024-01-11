@@ -17,8 +17,8 @@ import sys
 import streamlit as st
 from myfunc.mojafunkcija import st_style
 import json
-from langchain.chat_models import ChatOpenAI
-from langchain.chains import create_extraction_chain
+from langchain_openai.chat_models import ChatOpenAI
+from langchain.chains.openai_functions import create_extraction_chain
 import datetime
 
 st_style()
