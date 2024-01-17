@@ -1,7 +1,7 @@
+from ssl import ALERT_DESCRIPTION_CERTIFICATE_REVOKED
 import streamlit as st
 
 st.set_page_config(page_title="Embeddings", page_icon="📔", layout="wide")
-import pinecone
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_community.document_loaders import UnstructuredFileLoader
@@ -10,8 +10,8 @@ from myfunc.mojafunkcija import (
     st_style,
     positive_login,
     show_logo,
-    pinecone_stats,
     def_chunk,
+    pinecone_stats
 )
 import Pinecone_Utility
 import ScrapperH
@@ -24,10 +24,14 @@ import datetime
 import json
 from uuid import uuid4
 from io import StringIO
+from pinecone import Pinecone
+import pandas as pd
 
-version = "14.11.23. Hybrid"
+version = "17.01.24. Serverless"
 st_style()
 
+api_key = os.environ.get("PINECONE_API_KEY_S")
+host = os.environ.get("PINECONE_HOST")
 
 def main():
     show_logo()
@@ -37,7 +41,7 @@ def main():
         f"<p style='font-size: 10px; color: grey;'>{version}</p>",
         unsafe_allow_html=True,
     )
-    st.subheader("Izaberite operaciju za Embeding HYBRID Method")
+    st.subheader("Izaberite operaciju za Embeding HYBRID Method - Serverless")
     with st.expander("Pročitajte uputstvo:"):
         st.caption(
             """
@@ -103,7 +107,7 @@ def main():
                 st.session_state.nesto = 3
     with col5:
         with st.form(key="stats", clear_on_submit=False):
-            index = pinecone.Index("embedings1")
+            
             st.session_state.stats_button = st.form_submit_button(
                 label="Pokaži Statistiku",
                 use_container_width=True,
@@ -133,13 +137,9 @@ def main():
             Pinecone_Utility.main()
     elif st.session_state.nesto == 4:
         with phmain.container():
-            index = pinecone.Index("positive")
-            api_key = os.getenv("PINECONE_API_KEY_POS")
-            env = os.getenv("PINECONE_ENVIRONMENT_POS")
-            openai_api_key = os.environ.get("OPENAI_API_KEY")
-            index_name = "positive"
-            pinecone.init(api_key=api_key, environment=env)
-            index = pinecone.Index(index_name)
+            pinecone = Pinecone(api_key=api_key, host=host)
+            index_name = "positive-s"
+            index = pinecone.Index(host=host)
             pinecone_stats(index, index_name)
     elif st.session_state.nesto == 5:
         with phmain.container():
@@ -319,13 +319,9 @@ def do_embeddings():
                 my_meta.append(meta_data)
                 
             # Initialize OpenAI and Pinecone API key
-            api_key = os.getenv("PINECONE_API_KEY_POS")
-            env = os.getenv("PINECONE_ENVIRONMENT_POS")
-            openai_api_key = os.environ.get("OPENAI_API_KEY")
-            index_name = "positive"
-
-            pinecone.init(api_key=api_key, environment=env)
-            index = pinecone.Index(index_name)
+            pinecone = Pinecone(api_key=api_key, host=host)
+            index_name = "positive-s"
+            index = pinecone.Index(host=host)
             embeddings = OpenAIEmbeddings()
 
             # upsert data
@@ -343,7 +339,6 @@ def do_embeddings():
 
             # gives stats about index
             st.info("Napunjen Pinecone")
-
             st.success(f"Sačuvano u Pinecone-u")
             pinecone_stats(index, index_name)
 
