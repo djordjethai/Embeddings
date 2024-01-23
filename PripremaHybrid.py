@@ -340,7 +340,7 @@ def do_embeddings():
             )
 
             retriever.add_texts(texts=my_list, metadatas=my_meta, namespace=namespace)
-
+            
             # gives stats about index
             st.info("Napunjen Pinecone")
 
