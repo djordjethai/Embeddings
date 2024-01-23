@@ -32,6 +32,10 @@ from io import StringIO
 version = "05.11.23. (Streamlit, Pinecone, LangChain)"
 st_style()
 client=(openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY")))
+api_key = os.getenv("PINECONE_API_KEY")
+env = os.getenv("PINECONE_API_ENV")
+index_name = "embedings1"
+
 
 def def_chunk():
     with st.sidebar:
@@ -127,7 +131,7 @@ def main():
                 st.session_state.nesto = 3
     with col5:
         with st.form(key="stats", clear_on_submit=False):
-            index = pinecone.Index("embedings1")
+            
             st.session_state.stats_button = st.form_submit_button(
                 label="Pokaži Statistiku",
                 use_container_width=True,
@@ -156,13 +160,8 @@ def main():
             Pinecone_Utility.main()
     elif st.session_state.nesto == 4:
         with phmain.container():
-            index = pinecone.Index("embedings1")
-            api_key = os.getenv("PINECONE_API_KEY")
-            env = os.getenv("PINECONE_API_ENV")
-            openai_api_key = os.environ.get("OPENAI_API_KEY")
-            index_name = "embedings1"
-            pinecone.init(api_key=api_key, environment=env)
-            index = pinecone.Index(index_name)
+            
+            index = pinecone.Index(api_key=api_key, host="https://embedings1-b1b39e1.svc.us-west1-gcp.pinecone.io")
             pinecone_stats(index, index_name)
     elif st.session_state.nesto == 5:
         with phmain.container():
@@ -331,23 +330,8 @@ def do_embeddings():
             #     # Remove leading/trailing whitespace and add to the list
             #     chunks.append(line)
             
-            
-            # Initialize OpenAI and Pinecone API key
-            OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
-            PINECONE_API_KEY = os.environ.get("PINECONE_API_KEY")
-            PINECONE_API_ENV = os.environ.get("PINECONE_API_ENV")
-
-            # initializing openai and pinecone
-            embeddings = OpenAIEmbeddings(openai_api_key=OPENAI_API_KEY)
-            pinecone.init(api_key=PINECONE_API_KEY, environment=PINECONE_API_ENV)
-            index_name = "embedings1"
-
-            # # embedding start !!!
-
             # Set the embedding model name
             embed_model = "text-embedding-ada-002"
-
-           
             # Initialize the Pinecone index
             index = pinecone.Index(index_name)
             batch_size = 100  # how many embeddings we create and insert at once
@@ -418,7 +402,7 @@ def do_embeddings():
 
             # gives stats about index
             st.info("Napunjen Pinecone")
-            index = pinecone.Index(index_name)
+            index = pinecone.Index(api_key=api_key, host="https://embedings1-b1b39e1.svc.us-west1-gcp.pinecone.io")
             st.success(f"Sačuvano u Pinecone-u")
             pinecone_stats(index, index_name)
 

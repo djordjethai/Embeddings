@@ -1,7 +1,7 @@
 import streamlit as st
 
 st.set_page_config(page_title="Embeddings", page_icon="📔", layout="wide")
-import pinecone
+from pinecone import Pinecone
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_community.document_loaders import UnstructuredFileLoader
@@ -92,7 +92,7 @@ def main():
             if st.session_state.kreiraj_button:
                 st.session_state.nesto = 2
     with col4:
-        # st.write("Nije dostupno za Hybrid Embeding ")
+     
         with st.form(key="manage", clear_on_submit=False):
             st.session_state.manage_button = st.form_submit_button(
                 label="Upravljaj sa Pinecone",
@@ -103,7 +103,7 @@ def main():
                 st.session_state.nesto = 3
     with col5:
         with st.form(key="stats", clear_on_submit=False):
-            index = pinecone.Index("embedings1")
+     
             st.session_state.stats_button = st.form_submit_button(
                 label="Pokaži Statistiku",
                 use_container_width=True,
@@ -112,7 +112,7 @@ def main():
             if st.session_state.stats_button:
                 st.session_state.nesto = 4
     with col2:
-        # st.write("Nije dostupno za Hybrid Embeding ")
+      
         with st.form(key="screp", clear_on_submit=False):
             st.session_state.screp_button = st.form_submit_button(
                 label="Pripremi Websajt", use_container_width=True, help="Scrape URL"
@@ -133,12 +133,12 @@ def main():
             Pinecone_Utility.main()
     elif st.session_state.nesto == 4:
         with phmain.container():
-            index = pinecone.Index("positive")
+      
             api_key = os.getenv("PINECONE_API_KEY_POS")
             env = os.getenv("PINECONE_ENVIRONMENT_POS")
-            openai_api_key = os.environ.get("OPENAI_API_KEY")
+      
             index_name = "positive"
-            pinecone.init(api_key=api_key, environment=env)
+            pinecone=Pinecone(api_key=api_key, environment=env)
             index = pinecone.Index(index_name)
             pinecone_stats(index, index_name)
     elif st.session_state.nesto == 5:
@@ -291,7 +291,7 @@ def do_embeddings():
         )
 
         # Now, you can use stored_texts as your texts
-        # with st.form(key="my_form2", clear_on_submit=False):
+    
         namespace = st.text_input(
             "Unesi naziv namespace-a: ",
             help="Naziv namespace-a je obavezan za kreiranje Pinecone Indeksa",
@@ -324,8 +324,8 @@ def do_embeddings():
             openai_api_key = os.environ.get("OPENAI_API_KEY")
             index_name = "positive"
 
-            pinecone.init(api_key=api_key, environment=env)
-            index = pinecone.Index(index_name)
+            pinecone=Pinecone(api_key=api_key, host="https://positive-882bcef.svc.us-west1-gcp-free.pinecone.io")
+            index = pinecone.Index(host="https://positive-882bcef.svc.us-west1-gcp-free.pinecone.io")
             embeddings = OpenAIEmbeddings()
 
             # upsert data
