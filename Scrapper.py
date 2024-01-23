@@ -11,7 +11,6 @@ from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 import requests
 import openai
-import pinecone
 from bs4 import BeautifulSoup
 import sys
 import streamlit as st

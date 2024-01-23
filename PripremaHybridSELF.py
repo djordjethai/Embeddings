@@ -1,7 +1,7 @@
 import streamlit as st
 
 st.set_page_config(page_title="Embeddings", page_icon="📔", layout="wide")
-import pinecone
+from pinecone import Pinecone
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_community.document_loaders import UnstructuredFileLoader
@@ -104,7 +104,8 @@ def main():
                 st.session_state.nesto = 3
     with col5:
         with st.form(key="stats", clear_on_submit=False):
-            index = pinecone.Index("embedings1")
+            pinecone=Pinecone(api_key=api_key, host="https://positive-882bcef.svc.us-west1-gcp-free.pinecone.io")
+            index = pinecone.Index(host="https://positive-882bcef.svc.us-west1-gcp-free.pinecone.io")
             st.session_state.stats_button = st.form_submit_button(
                 label="Pokaži Statistiku",
                 use_container_width=True,
@@ -321,8 +322,8 @@ def do_embeddings():
             openai_api_key = os.environ.get("OPENAI_API_KEY")
             index_name = "positive"
 
-            pinecone.init(api_key=api_key, environment=env)
-            index = pinecone.Index(index_name)
+            pinecone=Pinecone(api_key=api_key, host="https://positive-882bcef.svc.us-west1-gcp-free.pinecone.io")
+            index = pinecone.Index(host="https://positive-882bcef.svc.us-west1-gcp-free.pinecone.io")
             embeddings = OpenAIEmbeddings()
 
             # upsert data

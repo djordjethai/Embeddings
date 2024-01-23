@@ -1,5 +1,5 @@
 import streamlit as st
-import pinecone
+from pinecone import Pinecone
 import sys
 import os
 import time
@@ -55,11 +55,8 @@ def main():
                         else:
                             PINECONE_API_KEY = os.environ.get("PINECONE_API_KEY")
                             PINECONE_API_ENV = os.environ.get("PINECONE_API_ENV")
-                        # initialize pinecone
-                        pinecone.init(
-                            api_key=PINECONE_API_KEY, environment=PINECONE_API_ENV
-                        )
-                        index = pinecone.Index(index_name)
+                            pinecone=Pinecone(api_key=PINECONE_API_KEY, host="https://positive-882bcef.svc.us-west1-gcp-free.pinecone.io")
+                            index = pinecone.Index(host="https://positive-882bcef.svc.us-west1-gcp-free.pinecone.io")
 
                         # ukoliko zelimo da izbrisemo samo nekle recorde bazirano na meta data
                         try:
