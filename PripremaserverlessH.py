@@ -30,7 +30,7 @@ import pandas as pd
 version = "07.02.24. 3072"
 st_style()
 
-api_key = os.environ.get("PINECONE_API_KEY_S")
+api_key = os.environ.get("PINECONE_API_KEY")
 host = os.environ.get("PINECONE_HOST")
 
 def main():
@@ -317,7 +317,7 @@ def do_embeddings():
                 # Append other data to my_meta
                 meta_data = {key: value for key, value in item.items() if key != 'text'}
                 my_meta.append(meta_data)
-                
+            
             # Initialize OpenAI and Pinecone API key
             pinecone = Pinecone(api_key=api_key, host=host)
             index_name = "neo-positive"
