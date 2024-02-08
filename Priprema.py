@@ -1,7 +1,7 @@
 import streamlit as st
 
 st.set_page_config(page_title="Embeddings", page_icon="📔", layout="wide")
-import pinecone
+from pinecone import Pinecone
 
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -161,7 +161,7 @@ def main():
     elif st.session_state.nesto == 4:
         with phmain.container():
             
-            index = pinecone.Index(api_key=api_key, host="https://embedings1-b1b39e1.svc.us-west1-gcp.pinecone.io")
+            index = Pinecone.Index(api_key=api_key, host="https://embedings1-b1b39e1.svc.us-west1-gcp.pinecone.io")
             pinecone_stats(index, index_name)
     elif st.session_state.nesto == 5:
         with phmain.container():
@@ -333,7 +333,7 @@ def do_embeddings():
             # Set the embedding model name
             embed_model = "text-embedding-ada-002"
             # Initialize the Pinecone index
-            index = pinecone.Index(index_name)
+            #index = pinecone.Index(index_name)
             batch_size = 100  # how many embeddings we create and insert at once
             progress_text2 = "Insertovanje u Pinecone je u toku."
             progress_bar2 = st.progress(0.0, text=progress_text2)
@@ -402,7 +402,7 @@ def do_embeddings():
 
             # gives stats about index
             st.info("Napunjen Pinecone")
-            index = pinecone.Index(api_key=api_key, host="https://embedings1-b1b39e1.svc.us-west1-gcp.pinecone.io")
+            index = Pinecone.Index(api_key=api_key, host="https://embedings1-b1b39e1.svc.us-west1-gcp.pinecone.io")
             st.success(f"Sačuvano u Pinecone-u")
             pinecone_stats(index, index_name)
 

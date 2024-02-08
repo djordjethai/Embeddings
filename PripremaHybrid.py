@@ -327,7 +327,7 @@ def do_embeddings():
             pinecone=Pinecone(api_key=api_key, host="https://positive-882bcef.svc.us-west1-gcp-free.pinecone.io")
             index = pinecone.Index(host="https://positive-882bcef.svc.us-west1-gcp-free.pinecone.io")
             embeddings = OpenAIEmbeddings()
-
+            
             # upsert data
             bm25_encoder = BM25Encoder()
             # fit tf-idf values on your corpus
