@@ -2,7 +2,6 @@ import streamlit as st
 
 st.set_page_config(page_title="Embeddings", page_icon="📔", layout="wide")
 from pinecone import Pinecone
-
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import UnstructuredFileLoader, UnstructuredPDFLoader
@@ -160,8 +159,8 @@ def main():
             Pinecone_Utility.main()
     elif st.session_state.nesto == 4:
         with phmain.container():
-            
-            index = Pinecone.Index(api_key=api_key, host="https://embedings1-b1b39e1.svc.us-west1-gcp.pinecone.io")
+            pinecone=Pinecone(api_key=api_key, host="https://positive-882bcef.svc.us-west1-gcp-free.pinecone.io")
+            index = pinecone.Index(api_key=api_key, host="https://positive-882bcef.svc.us-west1-gcp-free.pinecone.io")
             pinecone_stats(index, index_name)
     elif st.session_state.nesto == 5:
         with phmain.container():
@@ -333,7 +332,8 @@ def do_embeddings():
             # Set the embedding model name
             embed_model = "text-embedding-ada-002"
             # Initialize the Pinecone index
-            #index = pinecone.Index(index_name)
+            pinecone=Pinecone(api_key=api_key, host="https://positive-882bcef.svc.us-west1-gcp-free.pinecone.io")
+            index = pinecone.Index(api_key=api_key, host="https://positive-882bcef.svc.us-west1-gcp-free.pinecone.io")
             batch_size = 100  # how many embeddings we create and insert at once
             progress_text2 = "Insertovanje u Pinecone je u toku."
             progress_bar2 = st.progress(0.0, text=progress_text2)
@@ -402,7 +402,7 @@ def do_embeddings():
 
             # gives stats about index
             st.info("Napunjen Pinecone")
-            index = Pinecone.Index(api_key=api_key, host="https://embedings1-b1b39e1.svc.us-west1-gcp.pinecone.io")
+            index = pinecone.Index(api_key=api_key, host="https://embedings1-b1b39e1.svc.us-west1-gcp.pinecone.io")
             st.success(f"Sačuvano u Pinecone-u")
             pinecone_stats(index, index_name)
 

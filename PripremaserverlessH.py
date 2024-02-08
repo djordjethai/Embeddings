@@ -27,10 +27,10 @@ from io import StringIO
 from pinecone import Pinecone
 import pandas as pd
 
-version = "17.01.24. Serverless"
+version = "07.02.24. 3072"
 st_style()
 
-api_key = os.environ.get("PINECONE_API_KEY_S")
+api_key = os.environ.get("PINECONE_API_KEY")
 host = os.environ.get("PINECONE_HOST")
 
 def main():
@@ -138,7 +138,7 @@ def main():
     elif st.session_state.nesto == 4:
         with phmain.container():
             pinecone = Pinecone(api_key=api_key, host=host)
-            index_name = "positive-s"
+            index_name = "neo-positive"
             index = pinecone.Index(host=host)
             pinecone_stats(index, index_name)
     elif st.session_state.nesto == 5:
@@ -317,12 +317,12 @@ def do_embeddings():
                 # Append other data to my_meta
                 meta_data = {key: value for key, value in item.items() if key != 'text'}
                 my_meta.append(meta_data)
-                
+            
             # Initialize OpenAI and Pinecone API key
             pinecone = Pinecone(api_key=api_key, host=host)
-            index_name = "positive-s"
+            index_name = "neo-positive"
             index = pinecone.Index(host=host)
-            embeddings = OpenAIEmbeddings()
+            embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
 
             # upsert data
             bm25_encoder = BM25Encoder()
