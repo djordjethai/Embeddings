@@ -107,7 +107,8 @@ def main():
                 st.session_state.nesto = 3
     with col5:
         with st.form(key="stats", clear_on_submit=False):
-            
+            index_name = st.text_input(
+                           "Unesite indeks : ", help="Unesite ime indeksa koji želite da vidite")
             st.session_state.stats_button = st.form_submit_button(
                 label="Pokaži Statistiku",
                 use_container_width=True,
@@ -115,6 +116,28 @@ def main():
             )
             if st.session_state.stats_button:
                 st.session_state.nesto = 4
+            
+            if index_name!="":
+                if index_name == "positive":
+                        PINECONE_API_KEY = os.environ.get("PINECONE_API_KEY_POS_STARI")
+                        pinecone=Pinecone(api_key=PINECONE_API_KEY, host="https://positive-882bcef.svc.us-west1-gcp-free.pinecone.io") #positive (medakovic, free)
+                        index = pinecone.Index(host="https://positive-882bcef.svc.us-west1-gcp-free.pinecone.io") #positive
+                elif index_name=="embedings1":
+                        PINECONE_API_KEY = os.environ.get("PINECONE_API_KEY")
+                        pinecone=Pinecone(api_key=PINECONE_API_KEY, host="https://embedings1-b1b39e1.svc.us-west1-gcp.pinecone.io") #embedings1 (thai, free)
+                        index = pinecone.Index(host="https://embedings1-b1b39e1.svc.us-west1-gcp.pinecone.io") #embedings1
+                elif index_name=="neo-positive":
+                        PINECONE_API_KEY = os.environ.get("PINECONE_API_KEY_S")
+                        pinecone=Pinecone(api_key=PINECONE_API_KEY, host="https://neo-positive-a9w1e6k.svc.apw5-4e34-81fa.pinecone.io") #neo-positive (thai, serverless, 3072)
+                        index = pinecone.Index(host="https://neo-positive-a9w1e6k.svc.apw5-4e34-81fa.pinecone.io") #neo-positive
+                elif index_name=="positive-s":
+                        PINECONE_API_KEY = os.environ.get("PINECONE_API_KEY_S")
+                        pinecone=Pinecone(api_key=PINECONE_API_KEY, host="https://positive-s-a9w1e6k.svc.apw5-4e34-81fa.pinecone.io") #positive-s (thai, serverless, 1536)
+                        index = pinecone.Index(host="https://positive-s-a9w1e6k.svc.apw5-4e34-81fa.pinecone.io") #positive-s  
+                # with phmain.container():
+                #         pinecone_stats(index, index_name)
+            
+            
     with col2:
    
         with st.form(key="screp", clear_on_submit=False):
@@ -137,9 +160,9 @@ def main():
             Pinecone_Utility.main()
     elif st.session_state.nesto == 4:
         with phmain.container():
-            pinecone = Pinecone(api_key=api_key, host=host)
-            index_name = "neo-positive"
-            index = pinecone.Index(host=host)
+            # pinecone = Pinecone(api_key=api_key, host=host)
+            # index_name = index_name
+            # index = pinecone.Index(host=host)
             pinecone_stats(index, index_name)
     elif st.session_state.nesto == 5:
         with phmain.container():
