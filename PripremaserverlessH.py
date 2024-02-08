@@ -2,7 +2,7 @@ from ssl import ALERT_DESCRIPTION_CERTIFICATE_REVOKED
 import streamlit as st
 
 st.set_page_config(page_title="Embeddings", page_icon="📔", layout="wide")
-from langchain_openai import OpenAIEmbeddings
+from openai import OpenAI
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_community.document_loaders import UnstructuredFileLoader
 import os
@@ -18,20 +18,20 @@ import ScrapperH
 import PyPDF2
 import io
 import re
-from langchain_community.retrievers import PineconeHybridSearchRetriever
 from pinecone_text.sparse import BM25Encoder
 import datetime
 import json
 from uuid import uuid4
 from io import StringIO
 from pinecone import Pinecone
-import pandas as pd
 
 version = "07.02.24. 3072"
 st_style()
 
 api_key = os.environ.get("PINECONE_API_KEY")
 host = os.environ.get("PINECONE_HOST")
+client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+
 
 def main():
     show_logo()
@@ -301,69 +301,46 @@ def prepare_embeddings(chunk_size, chunk_overlap):
         st.success(f"Tekstovi sačuvani na {file_name} su sada spremni za Embeding")
 
 
+
 def do_embeddings():
     with st.form(key="my_form_do", clear_on_submit=False):
-        err_log = ""
-        # Read the texts from the .txt file
-        chunks = []
-        dokum = st.file_uploader(
-            "Izaberite dokument/e",
-            key="upload_json_file",
-            type=[".json"],
-            help="Izaberite dokument koji ste podelili na delove za indeksiranje",
-        )
+        dokum = st.file_uploader("Izaberite dokument/e", key="upload_json_file", type=[".json"], help="Izaberite dokument koji ste podelili na delove za indeksiranje")
 
-        # Now, you can use stored_texts as your texts
-        # with st.form(key="my_form2", clear_on_submit=False):
-        namespace = st.text_input(
-            "Unesi naziv namespace-a: ",
-            help="Naziv namespace-a je obavezan za kreiranje Pinecone Indeksa",
-        )
-        submit_b2 = st.form_submit_button(
-            label="Submit", help="Pokreće kreiranje Pinecone Indeksa"
-        )
+        namespace = st.text_input("Unesi naziv namespace-a: ", help="Naziv namespace-a je obavezan za kreiranje Pinecone Indeksa")
+        submit_b2 = st.form_submit_button(label="Submit", help="Pokreće kreiranje Pinecone Indeksa")
+
         if submit_b2 and dokum and namespace:
             stringio = StringIO(dokum.getvalue().decode("utf-8"))
-
-            # Directly load the JSON data from file content
             data = json.load(stringio)
+            texts = [item['text'] for item in data]
+            my_meta = [{key: value for key, value in item.items() if key != 'text'} for item in data]
 
-            # Initialize lists outside the loop
-            my_list = []
-            my_meta = []
+            embeddings = []
+            for text in texts:
+                response = client.embeddings.create(
+                    input=text,
+                    model="text-embedding-3-large"
+                )
+                embedding = response.data[0].embedding
+                embeddings.append(embedding)
 
-            # Process each JSON object in the data
-            for item in data:
-                # Append the text to my_list
-                my_list.append(item['text'])
-    
-                # Append other data to my_meta
-                meta_data = {key: value for key, value in item.items() if key != 'text'}
-                my_meta.append(meta_data)
-            
-            # Initialize OpenAI and Pinecone API key
-            pinecone = Pinecone(api_key=api_key, host=host)
-            index_name = "neo-positive"
+
+            pinecone=Pinecone(api_key=api_key, host=host)
             index = pinecone.Index(host=host)
-            embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
 
-            # upsert data
-            bm25_encoder = BM25Encoder()
-            # fit tf-idf values on your corpus
-            bm25_encoder.fit(my_list)
+            upsert_data = [
+                {"id": str(i), "values": embeddings[i], "metadata": my_meta[i]}
+                for i in range(len(embeddings))
+            ]
 
-            retriever = PineconeHybridSearchRetriever(
-                embeddings=embeddings,
-                sparse_encoder=bm25_encoder,
-                index=index,
-            )
+            index.upsert(vectors=upsert_data, namespace=namespace)
 
-            retriever.add_texts(texts=my_list, metadatas=my_meta, namespace=namespace)
+            st.info("Pinecone index updated successfully.")
+            st.success("Data successfully saved in Pinecone.")
 
-            # gives stats about index
-            st.info("Napunjen Pinecone")
-            st.success(f"Sačuvano u Pinecone-u")
-            pinecone_stats(index, index_name)
+
+
+
 
 
 # Koristi se samo za deploy na streamlit.io
