@@ -159,8 +159,8 @@ def main():
             Pinecone_Utility.main()
     elif st.session_state.nesto == 4:
         with phmain.container():
-            pinecone=Pinecone(api_key=api_key, host="https://positive-882bcef.svc.us-west1-gcp-free.pinecone.io")
-            index = pinecone.Index(api_key=api_key, host="https://positive-882bcef.svc.us-west1-gcp-free.pinecone.io")
+            pinecone=Pinecone(api_key=api_key, host="https://embedings1-b1b39e1.svc.us-west1-gcp.pinecone.io")
+            index = pinecone.Index(host="https://embedings1-b1b39e1.svc.us-west1-gcp.pinecone.io")
             pinecone_stats(index, index_name)
     elif st.session_state.nesto == 5:
         with phmain.container():

@@ -52,12 +52,22 @@ def main():
                             PINECONE_API_ENV = os.environ.get(
                                 "PINECONE_ENVIRONMENT_POS"
                             )
-                        else:
+                            pinecone=Pinecone(api_key=PINECONE_API_KEY, host="https://positive-882bcef.svc.us-west1-gcp-free.pinecone.io") #positive (medakovic, free)
+                            index = pinecone.Index(host="https://positive-882bcef.svc.us-west1-gcp-free.pinecone.io") #positive
+                        elif index_name=="embedings1":
                             PINECONE_API_KEY = os.environ.get("PINECONE_API_KEY")
                             PINECONE_API_ENV = os.environ.get("PINECONE_API_ENV")
-                            pinecone=Pinecone(api_key=PINECONE_API_KEY, host="https://positive-882bcef.svc.us-west1-gcp-free.pinecone.io")
-                            index = pinecone.Index(host="https://positive-882bcef.svc.us-west1-gcp-free.pinecone.io")
-
+                            pinecone=Pinecone(api_key=PINECONE_API_KEY, host="https://embedings1-b1b39e1.svc.us-west1-gcp.pinecone.io") #embedings1 (thai, free)
+                            index = pinecone.Index(host="https://embedings1-b1b39e1.svc.us-west1-gcp.pinecone.io") #embedings1
+                        elif index_name=="neo-positive":
+                            PINECONE_API_KEY = os.environ.get("PINECONE_API_KEY_S")
+                            pinecone=Pinecone(api_key=PINECONE_API_KEY, host="https://neo-positive-a9w1e6k.svc.apw5-4e34-81fa.pinecone.io") #neo-positive (thai, serverless, 3072)
+                            index = pinecone.Index(host="https://neo-positive-a9w1e6k.svc.apw5-4e34-81fa.pinecone.io") #neo-positive
+                        elif index_name=="positive-s":
+                            PINECONE_API_KEY = os.environ.get("PINECONE_API_KEY_S")
+                            pinecone=Pinecone(api_key=PINECONE_API_KEY, host="https://positive-s-a9w1e6k.svc.apw5-4e34-81fa.pinecone.io") #positive-s (thai, serverless, 1536)
+                            index = pinecone.Index(host="https://positive-s-a9w1e6k.svc.apw5-4e34-81fa.pinecone.io") #positive-s       
+                           
                         # ukoliko zelimo da izbrisemo samo nekle recorde bazirano na meta data
                         try:
                             if not moj_filter == "":
