@@ -71,10 +71,11 @@ def main():
                                     filter={"person_name": {"$in": [moj_filter]}},
                                     namespace=namespace,
                                 )
-                            elif not namespace == "":
-                                index.delete(delete_all=True, namespace=namespace)
+                            #elif not namespace == "":
                             else:
-                                index.delete(delete_all=True)
+                                index.delete(delete_all=True, namespace=namespace)
+                            # else:
+                            #     index.delete(delete_all=True)
                         except Exception as e:
                             st.error(f"Proverite ime indeksa koji ste uneli {e}")
                             sys.exit()
