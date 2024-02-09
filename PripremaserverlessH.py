@@ -301,7 +301,7 @@ def prepare_embeddings(chunk_size, chunk_overlap):
         st.success(f"Tekstovi sačuvani na {file_name} su sada spremni za Embeding")
 
 
-
+import secrets
 def do_embeddings():
     with st.form(key="my_form_do", clear_on_submit=False):
         dokum = st.file_uploader("Izaberite dokument/e", key="upload_json_file", type=[".json"], help="Izaberite dokument koji ste podelili na delove za indeksiranje")
@@ -329,7 +329,7 @@ def do_embeddings():
             index = pinecone.Index(host=host)
 
             upsert_data = [
-                {"id": str(i), "values": embeddings[i], "metadata": my_meta[i]}
+                {"id": str(secrets.token_urlsafe(nbytes=32)), "values": embeddings[i], "metadata": my_meta[i]}
                 for i in range(len(embeddings))
             ]
 
