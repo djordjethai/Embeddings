@@ -56,7 +56,7 @@ def add_self_data(line):
     system_prompt = "Use JSON format to extract person_name and topic. Extract the pearson name and the topic. If you can not decide on the name, return 'John Doe'. Use the Serbian language "
     
     response = client.chat.completions.create(
-                        model="gpt-4-1106-preview",
+                        model="gpt-4-turbo-preview",
                         temperature=0,
                         response_format = { "type": "json_object" },
                         messages=[
