@@ -11,8 +11,12 @@ from myfunc.mojafunkcija import (
     positive_login,
     show_logo,
     def_chunk,
-    pinecone_stats
+    pinecone_stats,
+
 )
+from langchain_community.retrievers import PineconeHybridSearchRetriever
+from pinecone_text.sparse import BM25Encoder
+import random
 import Pinecone_Utility
 import ScrapperH
 import PyPDF2
@@ -24,10 +28,11 @@ import json
 from uuid import uuid4
 from io import StringIO
 from pinecone import Pinecone
+from langchain.embeddings.openai import OpenAIEmbeddings
 
 version = "07.02.24. 3072"
 st_style()
-
+index_name="neo-positive"
 api_key = os.environ.get("PINECONE_API_KEY")
 host = os.environ.get("PINECONE_HOST")
 client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
@@ -191,10 +196,10 @@ def prepare_embeddings(chunk_size, chunk_overlap):
             help="Prefiks se dodaje na početak teksta pre podela na delove za indeksiranje",
         )
         add_schema = st.radio(
-            "Da li želite da dodate Schema Data (može značajno produžiti vreme potrebno za kreiranje): ",
-            ("Da", "Ne"),
+            "Da li želite da dodate Schema Data (Dodaje ime i temu u metadata - demo test za sada): ",
+            ("Ne", "Da"),
             key="add_schema_doc",
-            help="Schema Data se dodaje na početak teksta",
+            help="Schema Data se dodaje u metadata za sada samo demo",
         )
         st.session_state.submit_b = st.form_submit_button(
             label="Submit",
@@ -246,32 +251,33 @@ def prepare_embeddings(chunk_size, chunk_overlap):
 
             # Define a custom method to convert Document to a JSON-serializable format
             output_json_list = []
+            names = ["Miljan", "Goran", "Darko", "Nemanja"]
+            topics = ["RAG indeksi", "AI asistenti", "Epic", "Positive doo"]
             # Loop through the Document objects and convert them to JSON
             i = 0
             for document in texts:
                 i += 1
-                try:
-                    if add_schema == "Da":
-                        document.page_content = ScrapperH.add_schema_data(
-                            document.page_content
-                        )
-
-                        with st.expander(
-                            f"Obrađeni tekst: {i} od {len(texts)} ", expanded=False
-                        ):
-                            st.write(document.page_content)
-
-                except Exception as e:
-                    st.error("Schema nije na raspolaganju za ovaj chunk. {e}")
-
-                # # Specify the file name where you want to save the data
-                output_dict = {
-                    "id": str(uuid4()),
-                    "chunk": i,
-                    "text": text_prefix + document.page_content,
-                    "source": document.metadata.get("source", ""),
-                    "date": datetime.datetime.now().strftime("%d.%m.%Y")
-                }
+                if add_schema == "Da":
+                        person_name = random.choice(names)
+                        topic = random.choice(topics)
+                        output_dict = {
+                            "id": str(uuid4()),
+                            "chunk": i,
+                            "text": text_prefix + document.page_content,
+                            "source": document.metadata.get("source", ""),
+                            "date": datetime.datetime.now().strftime("%d.%m.%Y"),
+                            "person_name": person_name,
+                            "topic": topic,
+                        }
+                else:
+                
+                    output_dict = {
+                        "id": str(uuid4()),
+                        "chunk": i,
+                        "text": text_prefix + document.page_content,
+                        "source": document.metadata.get("source", ""),
+                        "date": datetime.datetime.now().strftime("%d.%m.%Y"),
+                       }
                 output_json_list.append(output_dict)
 
             # # Specify the file name where you want to save the JSON data
@@ -301,44 +307,68 @@ def prepare_embeddings(chunk_size, chunk_overlap):
         st.success(f"Tekstovi sačuvani na {file_name} su sada spremni za Embeding")
 
 
-import secrets
 def do_embeddings():
     with st.form(key="my_form_do", clear_on_submit=False):
-        dokum = st.file_uploader("Izaberite dokument/e", key="upload_json_file", type=[".json"], help="Izaberite dokument koji ste podelili na delove za indeksiranje")
+        err_log = ""
+        # Read the texts from the .txt file
+        chunks = []
+        dokum = st.file_uploader(
+            "Izaberite dokument/e",
+            key="upload_json_file",
+            type=[".json"],
+            help="Izaberite dokument koji ste podelili na delove za indeksiranje",
+        )
 
-        namespace = st.text_input("Unesi naziv namespace-a: ", help="Naziv namespace-a je obavezan za kreiranje Pinecone Indeksa")
-        submit_b2 = st.form_submit_button(label="Submit", help="Pokreće kreiranje Pinecone Indeksa")
-
+        # Now, you can use stored_texts as your texts
+    
+        namespace = st.text_input(
+            "Unesi naziv namespace-a: ",
+            help="Naziv namespace-a je obavezan za kreiranje Pinecone Indeksa",
+        )
+        submit_b2 = st.form_submit_button(
+            label="Submit", help="Pokreće kreiranje Pinecone Indeksa"
+        )
         if submit_b2 and dokum and namespace:
             stringio = StringIO(dokum.getvalue().decode("utf-8"))
+
+            # Directly load the JSON data from file content
             data = json.load(stringio)
-            texts = [item['text'] for item in data]
-            my_meta = [{key: value for key, value in item.items() if key != 'text'} for item in data]
 
-            embeddings = []
-            for text in texts:
-                response = client.embeddings.create(
-                    input=text,
-                    model="text-embedding-3-large"
-                )
-                embedding = response.data[0].embedding
-                embeddings.append(embedding)
+            # Initialize lists outside the loop
+            my_list = []
+            my_meta = []
 
-
+            # Process each JSON object in the data
+            for item in data:
+                # Append the text to my_list
+                my_list.append(item['text'])
+    
+                # Append other data to my_meta
+                meta_data = {key: value for key, value in item.items() if key != 'text'}
+                my_meta.append(meta_data)
+                
             pinecone=Pinecone(api_key=api_key, host=host)
             index = pinecone.Index(host=host)
+            embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
+            
+            # upsert data
+            bm25_encoder = BM25Encoder()
+            # fit tf-idf values on your corpus
+            bm25_encoder.fit(my_list)
 
-            upsert_data = [
-                {"id": str(secrets.token_urlsafe(nbytes=32)), "values": embeddings[i], "metadata": my_meta[i]}
-                for i in range(len(embeddings))
-            ]
+            retriever = PineconeHybridSearchRetriever(
+                embeddings=embeddings,
+                sparse_encoder=bm25_encoder,
+                index=index,
+            )
 
-            index.upsert(vectors=upsert_data, namespace=namespace)
+            retriever.add_texts(texts=my_list, metadatas=my_meta, namespace=namespace)
+            
+            # gives stats about index
+            st.info("Napunjen Pinecone")
 
-            st.info("Pinecone index updated successfully.")
-            st.success("Data successfully saved in Pinecone.")
-
-
+            st.success(f"Sačuvano u Pinecone-u")
+            pinecone_stats(index, index_name)
 
 
 
