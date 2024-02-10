@@ -25,6 +25,10 @@ from uuid import uuid4
 from io import StringIO
 from pinecone import Pinecone
 from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain_experimental.text_splitter import SemanticChunker
+            
+            
+            
 
 st_style()
 index_name="neo-positive"
@@ -240,6 +244,12 @@ def prepare_embeddings(chunk_size, chunk_overlap):
             key="add_schema_doc",
             help="Dodaje u metadata ime i temu",
         )
+        semantic = st.radio(
+            "Da li želite semantic chunking: ",
+            ("Ne", "Da"),
+            key="semantic",
+            help="Greg Kamaradt Semantic Chunker",
+        )
         st.session_state.submit_b = st.form_submit_button(
             label="Submit",
             help="Pokreće podelu dokumenta na delove za indeksiranje",
@@ -276,11 +286,14 @@ def prepare_embeddings(chunk_size, chunk_overlap):
             data = loader.load()
 
             # Split the document into smaller parts, the separator should be the word "Chapter"
-            text_splitter = CharacterTextSplitter(
-                separator=text_delimiter,
-                chunk_size=chunk_size,
-                chunk_overlap=chunk_overlap,
-            )
+            if semantic == "Da":
+                text_splitter = SemanticChunker(OpenAIEmbeddings())
+            else:
+                text_splitter = CharacterTextSplitter(
+                        separator=text_delimiter,
+                        chunk_size=chunk_size,
+                        chunk_overlap=chunk_overlap,
+                    )
 
             texts = text_splitter.split_documents(data)
 
