@@ -1,6 +1,4 @@
-from ssl import ALERT_DESCRIPTION_CERTIFICATE_REVOKED
 import streamlit as st
-
 st.set_page_config(page_title="Embeddings", page_icon="📔", layout="wide")
 from openai import OpenAI
 from langchain.text_splitter import CharacterTextSplitter
@@ -12,11 +10,9 @@ from myfunc.mojafunkcija import (
     show_logo,
     def_chunk,
     pinecone_stats,
-
 )
 from langchain_community.retrievers import PineconeHybridSearchRetriever
 from pinecone_text.sparse import BM25Encoder
-import random
 import Pinecone_Utility
 import ScrapperH
 import PyPDF2
@@ -30,12 +26,57 @@ from io import StringIO
 from pinecone import Pinecone
 from langchain.embeddings.openai import OpenAIEmbeddings
 
-version = "07.02.24. 3072"
 st_style()
 index_name="neo-positive"
 api_key = os.environ.get("PINECONE_API_KEY")
 host = os.environ.get("PINECONE_HOST")
 client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+version = "10.02.24"
+
+def add_self_data(line):
+    """
+    Extracts the person's name and topic from a given line of text using a GPT-4 model.
+
+    This function sends a request to a GPT-4 model with a specific prompt that instructs the model to use JSON format
+    for extracting a person's name ('person_name') and a topic from the provided text ('line'). The prompt includes instructions
+    to use the Serbian language for extraction. If the model cannot decide on a name, it is instructed to return 'John Doe'.
+
+    Parameters:
+    - line (str): A line of text from which the person's name and topic are to be extracted.
+
+    Returns:
+    - tuple: A tuple containing the extracted person's name and topic. If the extraction is successful, it returns
+      (person_name, topic). If the model cannot decide on a name, it returns ('John Doe', topic).
+
+    Note:
+    The function assumes that the response from the GPT-4 model is in a JSON-compatible format and that the keys
+    'person_name' and 'topic' are present in the JSON object returned by the model.
+    """
+    
+    system_prompt = "Use JSON format to extract person_name and topic. Extract the pearson name and the topic. If you can not decide on the name, return 'John Doe'. Use the Serbian language "
+    
+    response = client.chat.completions.create(
+                        model="gpt-4-1106-preview",
+                        temperature=0,
+                        response_format = { "type": "json_object" },
+                        messages=[
+                            {
+                                "role": "system",
+                                "content": system_prompt
+                            },
+                            {
+                                "role": "user",
+                                "content": line
+                            }
+                            
+                        ]
+                    )
+    json_content = response.choices[0].message.content.strip()
+    content_dict = json.loads(json_content)
+    person_name = content_dict.get("person_name", "John Doe")  # Fallback to "John Doe" if "person_name" is not found
+    topic = content_dict["topic"]
+    
+    return person_name, topic
 
 
 def main():
@@ -165,9 +206,7 @@ def main():
             Pinecone_Utility.main()
     elif st.session_state.nesto == 4:
         with phmain.container():
-            # pinecone = Pinecone(api_key=api_key, host=host)
-            # index_name = index_name
-            # index = pinecone.Index(host=host)
+            
             pinecone_stats(index, index_name)
     elif st.session_state.nesto == 5:
         with phmain.container():
@@ -196,10 +235,10 @@ def prepare_embeddings(chunk_size, chunk_overlap):
             help="Prefiks se dodaje na početak teksta pre podela na delove za indeksiranje",
         )
         add_schema = st.radio(
-            "Da li želite da dodate Schema Data (Dodaje ime i temu u metadata - demo test za sada): ",
+            "Da li želite da dodate Metadata (Dodaje ime i temu u metadata): ",
             ("Ne", "Da"),
             key="add_schema_doc",
-            help="Schema Data se dodaje u metadata za sada samo demo",
+            help="Dodaje u metadata ime i temu",
         )
         st.session_state.submit_b = st.form_submit_button(
             label="Submit",
@@ -251,24 +290,29 @@ def prepare_embeddings(chunk_size, chunk_overlap):
 
             # Define a custom method to convert Document to a JSON-serializable format
             output_json_list = []
-            names = ["Miljan", "Goran", "Darko", "Nemanja"]
-            topics = ["RAG indeksi", "AI asistenti", "Epic", "Positive doo"]
+            
             # Loop through the Document objects and convert them to JSON
             i = 0
             for document in texts:
                 i += 1
                 if add_schema == "Da":
-                        person_name = random.choice(names)
-                        topic = random.choice(topics)
-                        output_dict = {
-                            "id": str(uuid4()),
-                            "chunk": i,
-                            "text": text_prefix + document.page_content,
-                            "source": document.metadata.get("source", ""),
-                            "date": datetime.datetime.now().strftime("%d.%m.%Y"),
-                            "person_name": person_name,
-                            "topic": topic,
-                        }
+                    try:    
+                        person_name, topic = add_self_data(document.page_content)    
+                    except Exception as e:
+                        st.write(f"An error occurred {e}")
+                        person_name="John Doe"
+                        topic="Any"
+                    output_dict = {
+                        "id": str(uuid4()),
+                        "chunk": i,
+                        "text": text_prefix + document.page_content,
+                        "source": document.metadata.get("source", ""),
+                        "date": datetime.datetime.now().strftime("%d.%m.%Y"),
+                        "person_name": person_name,
+                        "topic": topic,
+                    }
+                    st.write(f"Obradjujem {i} od {len(texts)}, {person_name}, {topic} ")
+                    
                 else:
                 
                     output_dict = {
