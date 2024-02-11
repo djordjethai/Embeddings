@@ -1,5 +1,5 @@
 from os import environ
-import pinecone
+from pinecone import Pinecone
 from umap import UMAP
 import streamlit as st
 import matplotlib.pyplot as plt     # 2D
@@ -7,6 +7,7 @@ import plotly.graph_objs as go      # 3D
 from openai import OpenAI
 from mpl_toolkits.mplot3d import Axes3D     # mora, koristi se implicitno
 from myfunc.mojafunkcija import st_style
+import os
 
 client = OpenAI()
 
@@ -32,17 +33,19 @@ metric = col5.radio("Distance metric", ("cosine", "euclidean"), index=0)
 def embed_text_with_openai(text):
     return client.embeddings.create(
         input=[text], 
-        model="text-embedding-ada-002"
+        model="text-embedding-3-large"
     ).data[0].embedding
 
 def query_pinecone(vector):
-    return index.query(vector, top_k=top_k, namespace=namespace, include_values=True)
+    return index.query(vector=vector, top_k=top_k, namespace=namespace, include_values=True)
 
 
 if upit not in ["", " "] and st.button("Vizualizuj"):
     pinecone_api_key = environ["PINECONE_API_KEY_POS"]
-    pinecone.init(api_key=pinecone_api_key, environment="us-west1-gcp-free")
-    index = pinecone.Index("positive")
+    index_name="neo-positive"
+    host = os.environ.get("PINECONE_HOST")
+    pinecone=Pinecone(api_key=pinecone_api_key, host=host)
+    index = pinecone.Index(host=host)
 
     def visualize_results(results, query_vector):
         if not results["matches"]:
