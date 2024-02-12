@@ -27,8 +27,9 @@ col1, col2, col3, _, col5 = st.columns(5)
 
 namespace = col1.radio("Namespace", ("zapisnici", "pravnik"), index=0)
 dimens = col2.radio("Dimensionality", ("2D", "3D"), index=1)
-top_k = col3.slider("top_k", 1, 20, 10, 1)
+top_k = col3.slider("top_k", 3, 20, 10, 1)
 metric = col5.radio("Distance metric", ("cosine", "euclidean"), index=0)
+
 
 def embed_text_with_openai(text):
     return client.embeddings.create(
@@ -36,24 +37,35 @@ def embed_text_with_openai(text):
         model="text-embedding-3-large"
     ).data[0].embedding
 
+
 def query_pinecone(vector):
-    return index.query(vector=vector, top_k=top_k, namespace=namespace, include_values=True)
+    response = index.query(vector=vector, top_k=top_k, namespace=namespace, include_values=True, include_metadata=True)
+
+    results_with_text = [{"id": item["id"], 
+                          "values": item["values"], 
+                          "text": item["metadata"].get("context", "No context available")} 
+                          for item in response["matches"]]
+
+    text = [res["text"] for res in results_with_text]
+
+    return results_with_text, text
 
 
 if upit not in ["", " "] and st.button("Vizualizuj"):
-    pinecone_api_key = environ["PINECONE_API_KEY_POS"]
+    pinecone_api_key = environ["PINECONE_API_KEY"]
     index_name="neo-positive"
     host = os.environ.get("PINECONE_HOST")
     pinecone=Pinecone(api_key=pinecone_api_key, host=host)
     index = pinecone.Index(host=host)
 
-    def visualize_results(results, query_vector):
-        if not results["matches"]:
+    def visualize_results(results, query_vector, text):
+        if len(results) == 0:
             st.write("Nema podataka za vizualizaciju.")
             return
 
-        data = [res["values"] for res in results["matches"]]
-        ids = [res["id"][:5] for res in results["matches"]]
+        data = [res["values"] for res in results]
+        ids = [res["id"][:5] for res in results]
+
         if len(data) == 0 or len(data[0]) == 0:
             st.write("Podaci nisu u pravilnom formatu za UMAP.")
             return
@@ -128,9 +140,10 @@ if upit not in ["", " "] and st.button("Vizualizuj"):
 
             st.pyplot(fig)
 
+        st.write(text)
 
 
     vector = embed_text_with_openai(upit)
-    results = query_pinecone(vector)
-    visualize_results(results, vector)
+    results, text = query_pinecone(vector)
+    visualize_results(results, vector, text)
 
