@@ -46,7 +46,7 @@ def query_pinecone(vector):
                           "text": item["metadata"].get("context", "No context available")} 
                           for item in response["matches"]]
 
-    text = [res["text"] for res in results_with_text]
+    text = [f'{res["id"]}: {res["text"]}' for res in results_with_text]
 
     return results_with_text, text
 
