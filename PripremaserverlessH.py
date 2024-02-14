@@ -35,7 +35,8 @@ index_name="neo-positive"
 api_key = os.environ.get("PINECONE_API_KEY")
 host = os.environ.get("PINECONE_HOST")
 client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
-version = "10.02.24"
+version = "14.02.24"
+
 
 def add_self_data(line):
     """
@@ -82,6 +83,36 @@ def add_self_data(line):
     
     return person_name, topic
 
+def format_output_text(prefix, question, content):
+    return prefix + question + content
+
+def get_current_date_formatted():
+    return datetime.datetime.now().strftime("%d.%m.%Y")
+
+
+def add_question(chunk_text):
+    """
+    Ads a question to a chunk of text that will best match given statement and get the most similar content as the input if asked.
+    input chunk_text is a source text used to create question as a string
+    output is the question as a string
+    """
+    result = client.chat.completions.create(
+        model="gpt-4-turbo-preview",
+        temperature=0,
+        messages=[
+            {
+                "role": "system",
+                "content": "[Use only Serbian language] You are a top interviewer. Create a question that will best match given statement and get the most similar content as the input if asked."
+            },
+            {
+                "role": "user",
+                "content": chunk_text
+            }
+        ]
+    )
+
+    return result.choices[0].message.content
+    
 
 def main():
     show_logo()
@@ -95,13 +126,44 @@ def main():
     with st.expander("Pročitajte uputstvo:"):
         st.caption(
             """
-                   Prethodni korak bio je kreiranje pitanja. To smo radili pomoću besplatnog ChatGPT modela. Iz svake oblasti (ili iz dokumenta)
-                   zamolimo ChatGPT da kreira relevantna pitanja. Na pitanja mozemo da odgovorimo sami ili se odgovori mogu izvuci iz dokumenta.\n
-                   Ukoliko zelite da vam model kreira odgovore, odaberite ulazni fajl sa pitanjma iz prethodnog koraka.
-                   Opciono, ako je za odgovore potreban izvor, odaberite i fajl sa izvorom. Unesite sistemsku poruku (opis ponašanja modela)
-                   i naziv FT modela. Kliknite na Submit i sačekajte da se obrada završi.
-                   Fajl sa odgovorima ćete kasnije korisiti za kreiranje FT modela.\n
-                   Pre prelaska na sledeću fazu OBAVEZNO pregledajte izlazni dokument sa odgovorima i korigujte ga po potrebi.
+                   Korisničko uputstvo za rad sa aplikacijom za Embeddings za Hybrid Search
+
+**Uvod**
+Ovo uputstvo je namenjeno korisnicima koji žele da koriste aplikaciju za kreiranje i upravljanje embeddings-ima koristeći Streamlit interfejs i Pinecone servis. Aplikacija omogućava pripremu dokumenata, kreiranje embeddings-a, upravljanje Pinecone indeksima i prikaz statistike.
+
+***Aplikacija puni index prilagodjen Hybrid Search-u***
+
+**Priprema dokumenata**
+1. Odaberite opciju "Pripremi Dokument" u aplikaciji.
+2. Učitajte dokument(e) koji želite da obradite. Podržani formati su `.txt`, `.pdf`, `.docx`.
+3a. Definišite delimiter za podelu dokumenta na delove, prefiks koji će biti dodat na početak svakog dela, i opcionalno, da li želite dodavanje metapodataka i pitanja u tekst.
+***Ako ostavite polje prazno, default delimiter je novi paragraf***
+3b. Opciono definišite prefikks koji ce biti dodat na pocetak teksta.
+3c. Za Self_query model ce definisati dodatne meta podatke person name i topic.
+3d. Mozete naloziti modelu da definise pitanje za svaki tekst. Pitanje se dodaje polse prefiksa a pre teksta.
+3e. Mozete zatraziti Semantic chunking dokumenta, podelu i spajanje pasusa prema znacenju. U tom slucaju velicina chunka i overlap nisu u upotrebi
+
+Duzina chunka i overlap se mogu podesavati po potrebi. Generalno, ako vam j edokument vec struktuiran po paragrafima mozete korstiti vema male duzine (50) a podela ce se izvrsiti na prvom paragrafu. 
+Default duzina chunka je 1500 karaktera. Testirajte koji vam parametri najvise odgovaraju za odredjeni tip teksta.
+
+4. Kliknite na "Submit" da pokrenete obradu dokumenta. Dokument će biti podeljen na delove za indeksiranje.
+Pre prelaska na sledeću fazu OBAVEZNO pregledajte izlazni dokument sa odgovorima i korigujte ga po potrebi.
+
+**Kreiranje Embeddings-a**
+1. Nakon pripreme dokumenata, odaberite opciju "Kreiraj Embeding".
+2. Učitajte JSON fajl sa delovima teksta pripremljenim u prethodnom koraku.
+3. Unesite naziv namespace-a za Pinecone indeks.
+4. Kliknite na "Submit" da pokrenete kreiranje embeddings-a. Tekstovi će biti procesirani i sačuvani u Pinecone indeksu.
+
+**Upravljanje sa Pinecone**
+Odaberite opciju "Upravljaj sa Pinecone" za manipulaciju sa Pinecone indeksom. Funkcije uključuju brisanje podataka prema nazivu namespace-a I opciono filter a za metadata.
+
+**Prikaz Statistike**
+Odaberite opciju "Pokaži Statistiku" za pregled statističkih podataka Pinecone indeksa. Potrebno je uneti naziv indeksa za koji želite da vidite statistiku naziv namespace-ova i broj vektora.
+
+**Zaključak**
+Po završetku rada sa aplikacijom, možete preuzeti rezultate obrade u JSON formatu i koristiti ih dalje u svojim projektima. 
+
                    """
         )
 
@@ -244,6 +306,12 @@ def prepare_embeddings(chunk_size, chunk_overlap):
             key="add_schema_doc",
             help="Dodaje u metadata ime i temu",
         )
+        add_pitanje = st.radio(
+            "Da li želite da dodate pitanje: ",
+            ("Ne", "Da"),
+            key="add_pitanje_doc",
+            help="Dodaje pitanje u text",
+        )
         semantic = st.radio(
             "Da li želite semantic chunking: ",
             ("Ne", "Da"),
@@ -299,7 +367,7 @@ def prepare_embeddings(chunk_size, chunk_overlap):
 
 
             # # Create the OpenAI embeddings
-            st.write(f"Učitano {len(texts)} tekstova")
+            st.success(f"Učitano {len(texts)} tekstova")
 
             # Define a custom method to convert Document to a JSON-serializable format
             output_json_list = []
@@ -308,34 +376,33 @@ def prepare_embeddings(chunk_size, chunk_overlap):
             i = 0
             for document in texts:
                 i += 1
-                if add_schema == "Da":
-                    try:    
-                        person_name, topic = add_self_data(document.page_content)    
-                    except Exception as e:
-                        st.write(f"An error occurred {e}")
-                        person_name="John Doe"
-                        topic="Any"
-                    output_dict = {
-                        "id": str(uuid4()),
-                        "chunk": i,
-                        "text": text_prefix + document.page_content,
-                        "source": document.metadata.get("source", ""),
-                        "date": datetime.datetime.now().strftime("%d.%m.%Y"),
-                        "person_name": person_name,
-                        "topic": topic,
-                    }
-                    st.write(f"Obradjujem {i} od {len(texts)}, {person_name}, {topic} ")
-                    
+                if add_pitanje=="Da":
+                    pitanje = add_question(document.page_content) + " "
+                    st.info(f"Dodajem pitanje u tekst {i}")
                 else:
-                
-                    output_dict = {
-                        "id": str(uuid4()),
-                        "chunk": i,
-                        "text": text_prefix + document.page_content,
-                        "source": document.metadata.get("source", ""),
-                        "date": datetime.datetime.now().strftime("%d.%m.%Y"),
-                       }
+                    pitanje = ""
+      
+                output_dict = {
+                    "id": str(uuid4()),
+                    "chunk": i,
+                    "text": format_output_text(text_prefix, pitanje, document.page_content),
+                    "source": document.metadata.get("source", ""),
+                    "date": get_current_date_formatted(),
+                }
+
+                if add_schema == "Da":
+                    try:
+                        person_name, topic = add_self_data(document.page_content)
+                    except Exception as e:
+                        st.write(f"An error occurred: {e}")
+                        person_name, topic = "John Doe", "Any"
+    
+                    output_dict["person_name"] = person_name
+                    output_dict["topic"] = topic
+                    st.success(f"Processing {i} of {len(texts)}, {person_name}, {topic}")
+
                 output_json_list.append(output_dict)
+                
 
             # # Specify the file name where you want to save the JSON data
             json_string = (
