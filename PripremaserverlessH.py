@@ -47,10 +47,10 @@ def add_self_data(line):
     to use the Serbian language for extraction. If the model cannot decide on a name, it is instructed to return 'John Doe'.
 
     Parameters:
-    - line (str): A line of text from which the person's name and topic are to be extracted.
+    - line (str): Text from which the person's name and topic are to be extracted.
 
     Returns:
-    - tuple: A tuple containing the extracted person's name and topic. If the extraction is successful, it returns
+    - tuple: Containing the extracted person's name and topic. If the extraction is successful, it returns
       (person_name, topic). If the model cannot decide on a name, it returns ('John Doe', topic).
 
     Note:
@@ -92,9 +92,9 @@ def get_current_date_formatted():
 
 def add_question(chunk_text):
     """
-    Ads a question to a chunk of text that will best match given statement and get the most similar content as the input if asked.
-    input chunk_text is a source text used to create question as a string
-    output is the question as a string
+    Adds a question to a chunk of text that will best match given statement and get the most similar content as the input if asked.
+    input: chunk_text is a source text used to create question (str)
+    output: the question (str)
     """
     result = client.chat.completions.create(
         model="gpt-4-turbo-preview",
@@ -125,10 +125,7 @@ def main():
     st.subheader("Izaberite operaciju za Embeding HYBRID Method - Serverless")
     with st.expander("Pročitajte uputstvo:"):
         st.caption(
-            """
-                   Korisničko uputstvo za rad sa aplikacijom za Embeddings za Hybrid Search
-
-**Uvod**
+"""
 Ovo uputstvo je namenjeno korisnicima koji žele da koriste aplikaciju za kreiranje i upravljanje embeddings-ima koristeći Streamlit interfejs i Pinecone servis. Aplikacija omogućava pripremu dokumenata, kreiranje embeddings-a, upravljanje Pinecone indeksima i prikaz statistike.
 
 ***Aplikacija puni index prilagodjen Hybrid Search-u***
@@ -136,36 +133,30 @@ Ovo uputstvo je namenjeno korisnicima koji žele da koriste aplikaciju za kreira
 **Priprema dokumenata**
 1. Odaberite opciju "Pripremi Dokument" u aplikaciji.
 2. Učitajte dokument(e) koji želite da obradite. Podržani formati su `.txt`, `.pdf`, `.docx`.
-3a. Definišite delimiter za podelu dokumenta na delove, prefiks koji će biti dodat na početak svakog dela, i opcionalno, da li želite dodavanje metapodataka i pitanja u tekst.
-***Ako ostavite polje prazno, default delimiter je novi paragraf***
-3b. Opciono definišite prefikks koji ce biti dodat na pocetak teksta.
-3c. Za Self_query model ce definisati dodatne meta podatke person name i topic.
-3d. Mozete naloziti modelu da definise pitanje za svaki tekst. Pitanje se dodaje polse prefiksa a pre teksta.
-3e. Mozete zatraziti Semantic chunking dokumenta, podelu i spajanje pasusa prema znacenju. U tom slucaju velicina chunka i overlap nisu u upotrebi
+3. Definišite delimiter za podelu dokumenta na delove, prefiks koji će biti dodat na početak svakog dela, i opcionalno, da li želite dodavanje metapodataka i pitanja u tekst. \
+***Ako ostavite polje prazno, default delimiter je novi paragraf.***
+4. Opciono definišite prefiks koji ce biti dodat na pocetak teksta.
+5. Za Self_query model ce definisati dodatne meta podatke person name i topic.
+6. Mozete naloziti modelu da definise pitanje za svaki tekst. Pitanje se dodaje polse prefiksa a pre teksta.
+7. Mozete zatraziti Semantic chunking dokumenta, podelu i spajanje pasusa prema znacenju. U tom slucaju velicina chunka i overlap nisu u upotrebi. \
+    Duzina chunka i overlap se mogu podesavati po potrebi. Generalno, ako vam j edokument vec struktuiran po paragrafima mozete korstiti vema male duzine (50) a podela ce se izvrsiti na prvom paragrafu. Default duzina chunka je 1500 karaktera. Testirajte koji vam parametri najvise odgovaraju za odredjeni tip teksta.
+8. Kliknite na "Submit" da pokrenete obradu dokumenta. Dokument će biti podeljen na delove za indeksiranje.
 
-Duzina chunka i overlap se mogu podesavati po potrebi. Generalno, ako vam j edokument vec struktuiran po paragrafima mozete korstiti vema male duzine (50) a podela ce se izvrsiti na prvom paragrafu. 
-Default duzina chunka je 1500 karaktera. Testirajte koji vam parametri najvise odgovaraju za odredjeni tip teksta.
-
-4. Kliknite na "Submit" da pokrenete obradu dokumenta. Dokument će biti podeljen na delove za indeksiranje.
-Pre prelaska na sledeću fazu OBAVEZNO pregledajte izlazni dokument sa odgovorima i korigujte ga po potrebi.
+Pre prelaska na sledeću fazu OBAVEZNO pregledajte izlazni JSON dokument sa odgovorima i korigujte ga po potrebi.
 
 **Kreiranje Embeddings-a**
-1. Nakon pripreme dokumenata, odaberite opciju "Kreiraj Embeding".
+1. Nakon što ste odradili prethodni deo, odaberite opciju "Kreiraj Embeding".
 2. Učitajte JSON fajl sa delovima teksta pripremljenim u prethodnom koraku.
-3. Unesite naziv namespace-a za Pinecone indeks.
+3. Unesite naziv namespace-a za Pinecone indeks. Ako ne postoji, biće automatski kreiran novi.
 4. Kliknite na "Submit" da pokrenete kreiranje embeddings-a. Tekstovi će biti procesirani i sačuvani u Pinecone indeksu.
 
-**Upravljanje sa Pinecone**
-Odaberite opciju "Upravljaj sa Pinecone" za manipulaciju sa Pinecone indeksom. Funkcije uključuju brisanje podataka prema nazivu namespace-a I opciono filter a za metadata.
+Odaberite opciju "Upravljaj sa Pinecone" za manipulaciju sa Pinecone indeksom. Funkcije uključuju brisanje podataka prema nazivu namespace-a I opciono filtriranje po metadata.
 
-**Prikaz Statistike**
 Odaberite opciju "Pokaži Statistiku" za pregled statističkih podataka Pinecone indeksa. Potrebno je uneti naziv indeksa za koji želite da vidite statistiku naziv namespace-ova i broj vektora.
 
-**Zaključak**
 Po završetku rada sa aplikacijom, možete preuzeti rezultate obrade u JSON formatu i koristiti ih dalje u svojim projektima. 
-
-                   """
-        )
+"""
+)
 
     if "podeli_button" not in st.session_state:
         st.session_state["podeli_button"] = False
@@ -280,6 +271,32 @@ Po završetku rada sa aplikacijom, možete preuzeti rezultate obrade u JSON form
 
 
 def prepare_embeddings(chunk_size, chunk_overlap):
+    """
+    Prepares text documents for embedding by splitting them into chunks, optionally adding metadata and questions,
+    and finally saving them in a JSON format. This process facilitates the creation of Pinecone Indexes with rich, 
+    searchable content.
+
+    Steps include:
+    1. Uploading documents (supports txt, pdf, docx formats) for processing.
+    2. Specifying a delimiter for splitting the document into chunks, with an option for paragraph splitting.
+    3. Adding an optional prefix to text chunks.
+    4. Optionally enriching chunks with metadata (names and topics) and predefined questions.
+    5. Choosing between standard and semantic chunking methods for splitting documents.
+    6. Splitting the document into chunks based on the specified delimiter or semantic content.
+    7. Converting the processed chunks into a JSON serializable format and saving them as a JSON file.
+
+    Parameters:
+    - chunk_size (int): The size of each chunk after splitting, relevant for character-based splitting.
+    - chunk_overlap (int): The number of characters that overlap between adjacent chunks, relevant for character-based splitting.
+
+    Returns:
+    - None. The function provides feedback through Streamlit's interface, including success messages and download options for the generated JSON file.
+
+    Note:
+    - This function is designed to be used within a Streamlit app and makes extensive use of Streamlit widgets for user input and feedback.
+    - Semantic chunking relies on embeddings for content-aware splitting, while standard chunking uses simple text delimiters.
+    - The function assumes the presence of several utility functions and classes (e.g., `UnstructuredFileLoader`, `SemanticChunker`, `CharacterTextSplitter`, `add_question`, `format_output_text`, `add_self_data`, `get_current_date_formatted`) which need to be defined elsewhere in the code.
+    """
     skinuto = False
     napisano = False
 
@@ -432,6 +449,34 @@ def prepare_embeddings(chunk_size, chunk_overlap):
 
 
 def do_embeddings():
+    """
+    This function creates a Pinecone Index with embeddings and metadata from a JSON document uploaded by the user. 
+    The document should be divided into parts for indexing, where each part contains text and possibly additional metadata. 
+
+    The process involves:
+    1. Uploading a JSON document through a Streamlit file uploader.
+    2. Entering a namespace name, which is mandatory for creating the Pinecone Index.
+    3. Submitting the form to trigger the indexing process.
+
+    The JSON document should be structured such that each item contains a 'text' field and can contain additional metadata.
+    The function reads the document, extracts texts and metadata, and then uses an embeddings model (OpenAIEmbeddings with the model "text-embedding-3-large") 
+    and a BM25Encoder for creating text embeddings and indexing them in Pinecone alongside the metadata. 
+
+    After successfully adding the texts and metadata to the Pinecone Index, the function displays messages indicating the completion of the process and provides index statistics.
+
+    Parameters:
+    - No direct parameters are taken by the function, but it utilizes Streamlit widgets for input:
+        - A file uploader to select the JSON document.
+        - A text input for the namespace name.
+        - A submit button to trigger the process.
+
+    Returns:
+    - None. The function provides user feedback through Streamlit's informational messages.
+
+    Note:
+    - This function is designed to be used within a Streamlit app, relying heavily on Streamlit's form, file uploader, and feedback widgets.
+    - It assumes the existence of a configured Pinecone instance (`Pinecone(api_key=api_key, host=host)`) and the necessary import statements outside the function scope.
+    """
     with st.form(key="my_form_do", clear_on_submit=False):
         err_log = ""
         # Read the texts from the .txt file
