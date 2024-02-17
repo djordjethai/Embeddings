@@ -2,7 +2,6 @@ import streamlit as st
 st.set_page_config(page_title="Embeddings", page_icon="📔", layout="wide")
 from openai import OpenAI
 from langchain.text_splitter import CharacterTextSplitter
-from langchain_community.document_loaders import UnstructuredFileLoader
 import os
 from myfunc.mojafunkcija import (
     st_style,
@@ -13,12 +12,14 @@ from myfunc.mojafunkcija import (
 )
 from langchain_community.retrievers import PineconeHybridSearchRetriever
 from pinecone_text.sparse import BM25Encoder
-import Pinecone_Utility
+from Pinecone_Utility import (
+    read_uploaded_file, 
+    create_graph, 
+    obrisi_index, 
+ )
 import ScrapperH
-import PyPDF2
-import io
-import re
-from pinecone_text.sparse import BM25Encoder
+from tqdm.auto import tqdm
+from time import sleep
 import datetime
 import json
 from uuid import uuid4
@@ -27,15 +28,13 @@ from pinecone import Pinecone
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain_experimental.text_splitter import SemanticChunker
             
-            
-            
-
+ 
 st_style()
 index_name="neo-positive"
-api_key = os.environ.get("PINECONE_API_KEY")
+#api_key = os.environ.get("PINECONE_API_KEY")
 host = os.environ.get("PINECONE_HOST")
 client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
-version = "14.02.24"
+version = "17.02.24"
 
 
 def add_self_data(line):
@@ -122,11 +121,12 @@ def main():
         f"<p style='font-size: 10px; color: grey;'>{version}</p>",
         unsafe_allow_html=True,
     )
-    st.subheader("Izaberite operaciju za Embeding HYBRID Method - Serverless")
+    st.subheader("Embedings - Hybrid (neo-positive) i Semantic (embedings1)")
+    st.caption("Odaberite operaciju")
     with st.expander("Pročitajte uputstvo:"):
         st.caption(
             """
-                   Korisničko uputstvo za rad sa aplikacijom za Embeddings za Hybrid Search
+                   Korisničko uputstvo za rad sa aplikacijom za Embeddings
 
 **Uvod**
 Ovo uputstvo je namenjeno korisnicima koji žele da koriste aplikaciju za kreiranje i upravljanje embeddings-ima koristeći Streamlit interfejs i Pinecone servis. Aplikacija omogućava pripremu dokumenata, kreiranje embeddings-a, upravljanje Pinecone indeksima i prikaz statistike.
@@ -135,7 +135,7 @@ Ovo uputstvo je namenjeno korisnicima koji žele da koriste aplikaciju za kreira
 
 **Priprema dokumenata**
 1. Odaberite opciju "Pripremi Dokument" u aplikaciji.
-2. Učitajte dokument(e) koji želite da obradite. Podržani formati su `.txt`, `.pdf`, `.docx`.
+2. Iz side bar-a učitajte dokument(e) koji želite da obradite. Podržani formati su `.txt`, `.pdf`, `.docx`. Definisite duzini chunka i overlap.
 3a. Definišite delimiter za podelu dokumenta na delove, prefiks koji će biti dodat na početak svakog dela, i opcionalno, da li želite dodavanje metapodataka i pitanja u tekst.
 ***Ako ostavite polje prazno, default delimiter je novi paragraf***
 3b. Opciono definišite prefikks koji ce biti dodat na pocetak teksta.
@@ -147,26 +147,38 @@ Duzina chunka i overlap se mogu podesavati po potrebi. Generalno, ako vam j edok
 Default duzina chunka je 1500 karaktera. Testirajte koji vam parametri najvise odgovaraju za odredjeni tip teksta.
 
 4. Kliknite na "Submit" da pokrenete obradu dokumenta. Dokument će biti podeljen na delove za indeksiranje.
-Pre prelaska na sledeću fazu OBAVEZNO pregledajte izlazni dokument sa odgovorima i korigujte ga po potrebi.
+Pre prelaska na sledeću fazu OBAVEZNO uploadujte i pregledajte izlazni dokument sa odgovorima i korigujte ga po potrebi.
 
-**Kreiranje Embeddings-a**
+**Priprema websajta**
+1. Odaberite opciju "Pripremi Websajt" u aplikaciji.
+2. Unestite url.
+3. Definisite da li citate body ili body main objekat.
+
+Duzina chunka i overlap se mogu podesavati po potrebi. Generalno, ako vam j edokument vec struktuiran po paragrafima mozete korstiti vema male duzine (50) a podela ce se izvrsiti na prvom paragrafu. 
+Default duzina chunka je 1500 karaktera. Testirajte koji vam parametri najvise odgovaraju za odredjeni tip teksta.
+
+4. Kliknite na "Submit" da pokrenete obradu dokumenta. Dokument će biti podeljen na delove za indeksiranje.
+Pre prelaska na sledeću fazu OBAVEZNO uploadujte i pregledajte izlazni dokument sa odgovorima i korigujte ga po potrebi.
+
+**Kreiranje Knowledge Graph-a**
+1. Iz side bar-a učitajte fajl sa tekstom koji želite da obradite.
+2. Graf ime_originalnog_fajla.gml fajl ce biti sacuvan lokalno. Videcete i graficku reprezentaciju Knowledge Graph-a.
+
+
+**Kreiranje Embeddings-a  - vazi za Hybrid (neo-positive) i Semantic (embedings1) indexe **
 1. Nakon pripreme dokumenata, odaberite opciju "Kreiraj Embeding".
-2. Učitajte JSON fajl sa delovima teksta pripremljenim u prethodnom koraku.
-3. Unesite naziv namespace-a za Pinecone indeks.
-4. Kliknite na "Submit" da pokrenete kreiranje embeddings-a. Tekstovi će biti procesirani i sačuvani u Pinecone indeksu.
+2. Iz side bar-a učitajte JSON fajl sa delovima teksta pripremljenim u prethodnom koraku.
+3. Odaberite Index i unesite naziv namespace-a (neo_positive=Hybrid, embedings1=Semantic).
+4. Kliknite na "Submit" da pokrenete kreiranje embeddings-a. Tekstovi će biti procesirani i sačuvani u odabranom Pinecone indeksu.
 
 **Upravljanje sa Pinecone**
-Odaberite opciju "Upravljaj sa Pinecone" za manipulaciju sa Pinecone indeksom. Funkcije uključuju brisanje podataka prema nazivu namespace-a I opciono filter a za metadata.
 
-**Prikaz Statistike**
-Odaberite opciju "Pokaži Statistiku" za pregled statističkih podataka Pinecone indeksa. Potrebno je uneti naziv indeksa za koji želite da vidite statistiku naziv namespace-ova i broj vektora.
-
-**Zaključak**
-Po završetku rada sa aplikacijom, možete preuzeti rezultate obrade u JSON formatu i koristiti ih dalje u svojim projektima. 
-
+1.Odaberite naziv Indexa
+2. Odaberite opciju "Upravljaj sa Pinecone" za manipulaciju sa Pinecone indeksom. Funkcije uključuju brisanje podataka prema nazivu namespace-a I opciono filter a za metadata.
+3. **Prikaz Statistike** je pregled statističkih podataka Pinecone indeksa, naziv namespace-ova i broj vektora.
                    """
         )
-
+    st.caption("Odaberite operaciju")
     if "podeli_button" not in st.session_state:
         st.session_state["podeli_button"] = False
     if "manage_button" not in st.session_state:
@@ -188,7 +200,12 @@ Po završetku rada sa aplikacijom, možete preuzeti rezultate obrade u JSON form
         st.session_state["nesto"] = 0
 
     col1, col2, col3, col4, col5 = st.columns(5)
+    with st.sidebar:
+        st.subheader("Učitajte dokument za pripremu Pinecone Indeksa")
 
+        dokum = st.file_uploader(
+            "Izaberite dokument/e", key="upload_file", type=["txt", "pdf", "docx", "JSON"]
+        )
     with col1:
         with st.form(key="podeli", clear_on_submit=False):
             st.session_state.podeli_button = st.form_submit_button(
@@ -199,6 +216,15 @@ Po završetku rada sa aplikacijom, možete preuzeti rezultate obrade u JSON form
             if st.session_state.podeli_button:
                 st.session_state.nesto = 1
     with col3:
+        with st.form(key="graf", clear_on_submit=False):
+            st.session_state.podeli_button = st.form_submit_button(
+                label="Kreiraj Knowledge Graph",
+                use_container_width=True,
+                help="Kreiranje Knowledge Graph-a",
+            )
+            if st.session_state.podeli_button:
+                st.session_state.nesto = 6            
+    with col4:
         with st.form(key="kreiraj", clear_on_submit=False):
             st.session_state.kreiraj_button = st.form_submit_button(
                 label="Kreiraj Embeding",
@@ -207,7 +233,7 @@ Po završetku rada sa aplikacijom, možete preuzeti rezultate obrade u JSON form
             )
             if st.session_state.kreiraj_button:
                 st.session_state.nesto = 2
-    with col4:
+    with col5:
      
         with st.form(key="manage", clear_on_submit=False):
             st.session_state.manage_button = st.form_submit_button(
@@ -217,38 +243,6 @@ Po završetku rada sa aplikacijom, možete preuzeti rezultate obrade u JSON form
             )
             if st.session_state.manage_button:
                 st.session_state.nesto = 3
-    with col5:
-        with st.form(key="stats", clear_on_submit=False):
-            index_name = st.text_input(
-                           "Unesite indeks : ", help="Unesite ime indeksa koji želite da vidite")
-            st.session_state.stats_button = st.form_submit_button(
-                label="Pokaži Statistiku",
-                use_container_width=True,
-                help="Statistika Pinecone Indeksa",
-            )
-            if st.session_state.stats_button:
-                st.session_state.nesto = 4
-            
-            if index_name!="":
-                if index_name == "positive":
-                        PINECONE_API_KEY = os.environ.get("PINECONE_API_KEY_POS_STARI")
-                        pinecone=Pinecone(api_key=PINECONE_API_KEY, host="https://positive-882bcef.svc.us-west1-gcp-free.pinecone.io") #positive (medakovic, free)
-                        index = pinecone.Index(host="https://positive-882bcef.svc.us-west1-gcp-free.pinecone.io") #positive
-                elif index_name=="embedings1":
-                        PINECONE_API_KEY = os.environ.get("PINECONE_API_KEY")
-                        pinecone=Pinecone(api_key=PINECONE_API_KEY, host="https://embedings1-b1b39e1.svc.us-west1-gcp.pinecone.io") #embedings1 (thai, free)
-                        index = pinecone.Index(host="https://embedings1-b1b39e1.svc.us-west1-gcp.pinecone.io") #embedings1
-                elif index_name=="neo-positive":
-                        PINECONE_API_KEY = os.environ.get("PINECONE_API_KEY_S")
-                        pinecone=Pinecone(api_key=PINECONE_API_KEY, host="https://neo-positive-a9w1e6k.svc.apw5-4e34-81fa.pinecone.io") #neo-positive (thai, serverless, 3072)
-                        index = pinecone.Index(host="https://neo-positive-a9w1e6k.svc.apw5-4e34-81fa.pinecone.io") #neo-positive
-                elif index_name=="positive-s":
-                        PINECONE_API_KEY = os.environ.get("PINECONE_API_KEY_S")
-                        pinecone=Pinecone(api_key=PINECONE_API_KEY, host="https://positive-s-a9w1e6k.svc.apw5-4e34-81fa.pinecone.io") #positive-s (thai, serverless, 1536)
-                        index = pinecone.Index(host="https://positive-s-a9w1e6k.svc.apw5-4e34-81fa.pinecone.io") #positive-s  
-                # with phmain.container():
-                #         pinecone_stats(index, index_name)
-            
             
     with col2:
    
@@ -263,33 +257,55 @@ Po završetku rada sa aplikacijom, možete preuzeti rezultate obrade u JSON form
 
     if st.session_state.nesto == 1:
         with phmain.container():
-            prepare_embeddings(chunk_size, chunk_overlap)
+            if dokum is not None: 
+                prepare_embeddings(chunk_size, chunk_overlap, dokum)
+            else:
+                st.error("Uploadujte dokument")
     elif st.session_state.nesto == 2:
         with phmain.container():
-            do_embeddings()
+            if dokum is not None: 
+                index_name = st.selectbox("Odaberite index", ["neo-positive", "embedings1"], help="Unesite ime indeksa", key="opcije"
+                )
+                if index_name is not None and index_name!=" " and index_name !="" :
+                                        
+                            if index_name=="embedings1":
+           
+                                pinecone=Pinecone(api_key=os.environ.get("PINECONE_API_KEY_STARI"), host="https://embedings1-b1b39e1.svc.us-west1-gcp.pinecone.io") #embedings1 (thai, free)
+                                index = pinecone.Index(host="https://embedings1-b1b39e1.svc.us-west1-gcp.pinecone.io") #embedings1
+                                do_embeddings(dokum, "semantic", os.environ.get("PINECONE_API_KEY_STARI"), host="https://embedings1-b1b39e1.svc.us-west1-gcp.pinecone.io", index_name=index_name, index=index)
+                            elif index_name=="neo-positive":
+            
+                                pinecone=Pinecone(api_key=os.environ.get("PINECONE_API_KEY_S"), host="https://neo-positive-a9w1e6k.svc.apw5-4e34-81fa.pinecone.io") #neo-positive (thai, serverless, 3072)
+                                index = pinecone.Index(host="https://neo-positive-a9w1e6k.svc.apw5-4e34-81fa.pinecone.io") #neo-positive
+                                do_embeddings(dokum=dokum, tip="hybrid", api_key=os.environ.get("PINECONE_API_KEY_S"), host="https://neo-positive-a9w1e6k.svc.apw5-4e34-81fa.pinecone.io", index_name=index_name, index=index )
+                                
+                            else:
+                                st.error("Index ne postoji")
+                                st.stop()
+            else:
+                st.error("Uploadujte JSON dokument")
     elif st.session_state.nesto == 3:
         with phmain.container():
-            Pinecone_Utility.main()
-    elif st.session_state.nesto == 4:
-        with phmain.container():
-            
-            pinecone_stats(index, index_name)
+            obrisi_index()
+    
     elif st.session_state.nesto == 5:
         with phmain.container():
             ScrapperH.main(chunk_size, chunk_overlap)
+    elif st.session_state.nesto == 6:
+        with phmain.container():
+            if dokum is not None: 
+                create_graph(dokum)
+            else:
+                st.error("Uploadujte dokument")
 
 
-def prepare_embeddings(chunk_size, chunk_overlap):
+def prepare_embeddings(chunk_size, chunk_overlap, dokum):
     skinuto = False
     napisano = False
 
     file_name = "chunks.json"
     with st.form(key="my_form_prepare", clear_on_submit=False):
-        st.subheader("Učitajte dokumenta i metadata za Pinecone Indeks")
-
-        dokum = st.file_uploader(
-            "Izaberite dokument/e", key="upload_file", type=["txt", "pdf", "docx"]
-        )
+        
         # define delimiter
         text_delimiter = st.text_input(
             "Unesite delimiter: ",
@@ -327,32 +343,8 @@ def prepare_embeddings(chunk_size, chunk_overlap):
             text_prefix = text_prefix + " "
 
         if dokum is not None and st.session_state.submit_b == True:
-            with io.open(dokum.name, "wb") as file:
-                file.write(dokum.getbuffer())
-
-            if text_delimiter == "":
-                text_delimiter = "\n\n"
-
-            if ".pdf" in dokum.name:
-                pdf_reader = PyPDF2.PdfReader(dokum)
-                num_pages = len(pdf_reader.pages)
-                text_content = ""
-
-                for page in range(num_pages):
-                    page_obj = pdf_reader.pages[page]
-                    text_content += page_obj.extract_text()
-                text_content = text_content.replace("•", "")
-                text_content = re.sub(r"(?<=\b\w) (?=\w\b)", "", text_content)
-                with io.open("temp.txt", "w", encoding="utf-8") as f:
-                    f.write(text_content)
-
-                loader = UnstructuredFileLoader("temp.txt", encoding="utf-8")
-            else:
-                # Creating a file loader object
-                loader = UnstructuredFileLoader(dokum.name, encoding="utf-8")
-
-            data = loader.load()
-
+            
+            data=read_uploaded_file(dokum, text_delimiter)
             # Split the document into smaller parts, the separator should be the word "Chapter"
             if semantic == "Da":
                 text_splitter = SemanticChunker(OpenAIEmbeddings())
@@ -431,20 +423,13 @@ def prepare_embeddings(chunk_size, chunk_overlap):
         st.success(f"Tekstovi sačuvani na {file_name} su sada spremni za Embeding")
 
 
-def do_embeddings():
+def do_embeddings(dokum, tip, api_key, host, index_name, index):
     with st.form(key="my_form_do", clear_on_submit=False):
         err_log = ""
         # Read the texts from the .txt file
         chunks = []
-        dokum = st.file_uploader(
-            "Izaberite dokument/e",
-            key="upload_json_file",
-            type=[".json"],
-            help="Izaberite dokument koji ste podelili na delove za indeksiranje",
-        )
-
+        
         # Now, you can use stored_texts as your texts
-    
         namespace = st.text_input(
             "Unesi naziv namespace-a: ",
             help="Naziv namespace-a je obavezan za kreiranje Pinecone Indeksa",
@@ -471,23 +456,81 @@ def do_embeddings():
                 meta_data = {key: value for key, value in item.items() if key != 'text'}
                 my_meta.append(meta_data)
                 
-            pinecone=Pinecone(api_key=api_key, host=host)
-            index = pinecone.Index(host=host)
-            embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
-            
-            # upsert data
-            bm25_encoder = BM25Encoder()
-            # fit tf-idf values on your corpus
-            bm25_encoder.fit(my_list)
+            if tip == "hybrid":
+               embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
+               bm25_encoder = BM25Encoder()
+               # fit tf-idf values on your corpus
+               bm25_encoder.fit(my_list)
 
-            retriever = PineconeHybridSearchRetriever(
-                embeddings=embeddings,
-                sparse_encoder=bm25_encoder,
-                index=index,
-            )
-
-            retriever.add_texts(texts=my_list, metadatas=my_meta, namespace=namespace)
+               retriever = PineconeHybridSearchRetriever(
+                    embeddings=embeddings,
+                    sparse_encoder=bm25_encoder,
+                    index=index,
+               )
+                           
+               retriever.add_texts(texts=my_list, metadatas=my_meta, namespace=namespace)
+               
+            else:
+                embed_model = "text-embedding-ada-002"
+               
+                batch_size = 100  # how many embeddings we create and insert at once
+                progress_text2 = "Insertovanje u Pinecone je u toku."
+                progress_bar2 = st.progress(0.0, text=progress_text2)
+                ph2 = st.empty()
             
+                for i in tqdm(range(0, len(data), batch_size)):
+                    # find end of batch
+                    i_end = min(len(data), i + batch_size)
+                    meta_batch = data[i:i_end]
+
+                    # get texts to encode
+                    ids_batch = [x["id"] for x in meta_batch]
+                    texts = [x["text"] for x in meta_batch]
+                
+                    # create embeddings (try-except added to avoid RateLimitError)
+                    try:
+                        res = client.embeddings.create(input=texts, model=embed_model)
+
+                    except Exception as e:
+                        done = False
+                        print(e)
+                        while not done:
+                            sleep(5)
+                            try:
+                                res = client.embeddings.create(input=texts, model=embed_model)
+                                done = True
+
+                            except:
+                                pass
+
+                    embeds = [item.embedding for item in res.data]
+
+                    # Check for [nan] embeddings
+              
+                    if len(embeds) > 0:
+                    
+                        to_upsert = list(zip(ids_batch, embeds, meta_batch))
+                    else:
+                        err_log += f"Greška: {meta_batch}\n"
+                    # upsert to Pinecone
+                    err_log += f"Upserting {len(to_upsert)} embeddings\n"
+                    with open("err_log.txt", "w", encoding="utf-8") as file:
+                        file.write(err_log)
+
+                    index.upsert(vectors=to_upsert, namespace=namespace)
+                    stodva = len(data)
+                    if i_end > i:
+                        deo = i_end
+                    else:
+                        deo = i
+                    progress = deo / stodva
+                    l = int(deo / stodva * 100)
+
+                    ph2.text(f"Učitano je {deo} od {stodva} linkova što je {l} %")
+
+                    progress_bar2.progress(progress, text=progress_text2)
+                    
+
             # gives stats about index
             st.info("Napunjen Pinecone")
 

@@ -87,13 +87,12 @@ def scrape(url: str):
     # return as json
     return {"url": url, "text": main_content_text}, local_links
 
-
-# Now you can work with the parsed content using Beautiful Soup
+# Ne koristi se, zastarelo...
 def add_schema_data(line):
     openai_api_key = os.getenv("OPENAI_API_KEY")
 
     # Create an instance of ChatOpenAI
-    llm = ChatOpenAI(temperature=0, model="gpt-4", openai_api_key=openai_api_key)
+    llm = ChatOpenAI(temperature=0, model="gpt-4-turbo-preview", openai_api_key=openai_api_key)
 
     # mogu da se definisu bilo koji delovi kao JSON schema
 
@@ -154,12 +153,12 @@ def main(chunk_size, chunk_overlap):
         vrsta = st.radio(
             "Unesite vrstu (default je body main): ", ("body main", "body")
         )
-        add_schema = st.radio(
-            "Da li želite da dodate Schema Data (može značajno produžiti vreme potrebno za kreiranje): ",
-            ("Da", "Ne"),
-            help="Schema Data se dodaje na početak teksta",
-            key="add_schema_web",
-        )
+        # add_schema = st.radio(
+        #     "Da li želite da dodate Schema Data (može značajno produžiti vreme potrebno za kreiranje): ",
+        #     ("Da", "Ne"),
+        #     help="Schema Data se dodaje na početak teksta",
+        #     key="add_schema_web",
+        # )
         # chunk_size, chunk_overlap = def_chunk()
         submit_button = st.form_submit_button(label="Submit")
         st.info(f"Chunk veličina: {chunk_size}, chunk preklapanje: {chunk_overlap}")
@@ -259,16 +258,16 @@ def main(chunk_size, chunk_overlap):
                         progress_barl.progress(procenatl, text=progress_text)
                         ph2.text(f"Učitano {odstol} od {stol} chunkova što je {kl} % ")
 
-                        try:
-                            if add_schema == "Da":
-                                texts[il] = add_schema_data(texts[il])
+                        # try:
+                        #     if add_schema == "Da":
+                        #         texts[il] = add_schema_data(texts[il])
 
-                                with st.expander(
-                                    f"Obrađeni tekst, link: {odsto} deo: {odstol}"
-                                ):
-                                    st.write(texts[il])
-                        except Exception as e:
-                            st.error("Prefiks nije na raspolaganju za ovaj chunk.")
+                        #         with st.expander(
+                        #             f"Obrađeni tekst, link: {odsto} deo: {odstol}"
+                        #         ):
+                        #             st.write(texts[il])
+                        # except Exception as e:
+                        #     st.error("Prefiks nije na raspolaganju za ovaj chunk.")
                         chunks.append(
                             {
                                 "id": str(uuid4()),
