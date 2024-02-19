@@ -135,54 +135,55 @@ def create_graph(dokum):
     skinuto = False
     napisano = False
     slika_grafa = False
-    #with st.form(key="my_form_graph", clear_on_submit=False):
-    #st.session_state.submit_graph = st.form_submit_button(
-    #    label="Izradi Graph",
-    #    help="Pokreće izradu Graph-a",
-    #)
-    #if st.session_state.submit_graph == True:
-    with st.spinner("Kreiram Graf, molim vas sacekajte..."):
-        buffer = io.BytesIO()
-        # Write data to the buffer
-        buffer.write(dokum.getbuffer())
-        # Get the byte data from the buffer
-        byte_data = buffer.getvalue()
-        all_text = byte_data.decode('utf-8')
-                  
-        # initialize graph engine
-        index_creator = GraphIndexCreator(llm=ChatOpenAI(temperature=0, model="gpt-4-turbo-preview"))
-        text = "\n".join(all_text.split("\n\n"))
-        
-        # create graph
-        graph = index_creator.from_text(text)
-        prikaz = graph.get_triples()
-        with st.expander("Graf:"):
-            st.write(prikaz)
-        # Don't forget to close the buffer when done
-        buffer.close() 
-        # save graph, with the same name different extension
-        file_name = os.path.splitext(dokum.name)[0]
-        
-        graph_structure = create_graph_structure(prikaz)
-        napisano = st.info(
-                f"Tekst je sačuvan u gml obliku kao {file_name}.gml, downloadujte ga na svoj računar"
-        )
-        
-        skinuto = st.download_button(
-            "Download GML",
-            data=graph_structure,
-            file_name=f"{file_name}.gml",
-            mime='ascii',
-        )
+    if "skinuto" not in st.session_state:
+        st.session_state.skinuto = False
     
-        st.success(f"Graf je sačuvan kao {file_name}.gml")
+    if st.session_state.skinuto == False:
+        with st.spinner("Kreiram Graf, molim vas sacekajte..."):
+            buffer = io.BytesIO()
+            # Write data to the buffer
+            buffer.write(dokum.getbuffer())
+            # Get the byte data from the buffer
+            byte_data = buffer.getvalue()
+            all_text = byte_data.decode('utf-8')
+                  
+            # initialize graph engine
+            index_creator = GraphIndexCreator(llm=ChatOpenAI(temperature=0, model="gpt-4-turbo-preview"))
+            text = "\n".join(all_text.split("\n\n"))
+        
+            # create graph
+            graph = index_creator.from_text(text)
+            prikaz = graph.get_triples()
+            with st.expander("Graf:"):
+                st.write(prikaz)
+            # Don't forget to close the buffer when done
+            buffer.close() 
+            # save graph, with the same name different extension
+            file_name = os.path.splitext(dokum.name)[0]
+        
+            graph_structure = create_graph_structure(prikaz)
+            napisano = st.info(
+                    f"Tekst je sačuvan u gml obliku kao {file_name}.gml, downloadujte ga na svoj računar"
+            )
+        
+            skinut = st.download_button(
+                "Download GML",
+                data=graph_structure,
+                file_name=f"{file_name}.gml",
+                mime='ascii',
+            )
+            
+            st.session_state.skinuto = True
+            st.success(f"Graf je sačuvan kao {file_name}.gml")
                 
-            # Load the GML file
-        st.subheader("Učitajte GRAF ako zelite graficki prikaz")
-
+        # Load the GML file
+    
+    
+    if st.session_state.skinuto:
+        st.markdown("**Kada downloadujete graph file, učitajte GRAF ako zelite graficki prikaz**")
         slika_grafa = st.file_uploader(
-                "Izaberite GRAF dokument", key="upload_graf", type=["gml"]
-            )      
+            "Izaberite GRAF dokument", key="upload_graf", type=["gml"]
+        )      
             
         if slika_grafa is not None:
             with io.open(slika_grafa.name, "wb") as file:
