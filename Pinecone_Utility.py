@@ -14,6 +14,7 @@ import PyPDF2
 import io
 import re
 from langchain_community.document_loaders import UnstructuredFileLoader
+import unidecode
 
 
 st_style()
@@ -94,11 +95,52 @@ def obrisi_index():
                 
                             st.success("Uspešno obrisano")
 
+def create_node(id, label):
+    ascii_label = unidecode.unidecode(label)  # Convert label to ASCII
+    return f'  node [\n    id {id}\n    label "{ascii_label}"\n  ]\n'
 
+# Function to create an edge entry
+def create_edge(source, target, relation):
+    ascii_relation = unidecode.unidecode(relation)  # Convert relation to ASCII
+    return f'  edge [\n    source {source}\n    target {target}\n    relation "{ascii_relation}"\n  ]\n'
 
+def create_graph_structure(data):
+    graph = "graph [\n  directed 1\n"
+    nodes = {}
+    edges = []
+    graph_structure = "graph [\n  directed 1\n"
+    node_id = 0
+    for item in data:
+    # Check and add the first element of the tuple as a node
+        if item[0] not in nodes:
+            nodes[item[0]] = node_id
+            graph_structure += create_node(node_id, item[0])
+            node_id += 1
+    
+        # Check and add the second element of the tuple as a node
+        if item[1] not in nodes:
+            nodes[item[1]] = node_id
+            graph_structure += create_node(node_id, item[1])
+            node_id += 1
+
+        # Create an edge based on the relation (item[2])
+        graph_structure += create_edge(nodes[item[0]], nodes[item[1]], item[2])
+
+# Close the graph structure
+    graph_structure += "]"
+    return graph_structure
 
 # create graph 
 def create_graph(dokum):
+    skinuto = False
+    napisano = False
+    slika_grafa = False
+    #with st.form(key="my_form_graph", clear_on_submit=False):
+    #st.session_state.submit_graph = st.form_submit_button(
+    #    label="Izradi Graph",
+    #    help="Pokreće izradu Graph-a",
+    #)
+    #if st.session_state.submit_graph == True:
     with st.spinner("Kreiram Graf, molim vas sacekajte..."):
         buffer = io.BytesIO()
         # Write data to the buffer
@@ -120,17 +162,35 @@ def create_graph(dokum):
         buffer.close() 
         # save graph, with the same name different extension
         file_name = os.path.splitext(dokum.name)[0]
-        graph.write_to_gml(f"{file_name}.gml")
-    
-        # Load the GML file
-        G = nx.read_gml(f"{file_name}.gml")
-        nx.draw(G, with_labels=True, node_size=200, font_size=5)
-        st.pyplot(plt)  # Display the plot in Streamlit
         
+        graph_structure = create_graph_structure(prikaz)
         napisano = st.info(
-                f"Graf je sačuvan u GML obliku, na lokalnom folderu pod imenom {file_name}.gml"
-            )
-  
+                f"Tekst je sačuvan u gml obliku kao {file_name}.gml, downloadujte ga na svoj računar"
+        )
+        
+        skinuto = st.download_button(
+            "Download GML",
+            data=graph_structure,
+            file_name=f"{file_name}.gml",
+            mime='ascii',
+        )
+    
+        st.success(f"Graf je sačuvan kao {file_name}.gml")
+                
+            # Load the GML file
+        st.subheader("Učitajte GRAF ako zelite graficki prikaz")
+
+        slika_grafa = st.file_uploader(
+                "Izaberite GRAF dokument", key="upload_graf", type=["gml"]
+            )      
+            
+        if slika_grafa is not None:
+            with io.open(slika_grafa.name, "wb") as file:
+                    file.write(slika_grafa.getbuffer())
+            
+            G = nx.read_gml(slika_grafa.name)
+            nx.draw(G, with_labels=True, node_size=200, font_size=5)
+            st.pyplot(plt)  # Display the plot in Streamlit
         
 
 def read_uploaded_file(dokum, text_delimiter="space"):
