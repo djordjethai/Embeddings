@@ -110,7 +110,7 @@ def add_schema_data(line):
     # title i text u drugi index, onda imamo i duzi i kraci index
 
     chain = create_extraction_chain(schema, llm)
-    result = chain.run(line)
+    result = chain.invoke({line})["output"]
     for item in result:
         title = item["title"]
         keyword = item["keyword"]
