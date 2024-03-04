@@ -27,8 +27,12 @@ from io import StringIO
 from pinecone import Pinecone
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain_experimental.text_splitter import SemanticChunker
-            
- 
+
+from myfunc.retrievers import PromptDatabase
+with PromptDatabase() as db:
+    result1 = db.query_sql_record("ADD_SELF_DATA")
+    result2 = db.query_sql_record("MULTI_H_QA_SYSTEM")
+
 st_style()
 index_name="neo-positive"
 #api_key = os.environ.get("PINECONE_API_KEY")
@@ -57,7 +61,7 @@ def add_self_data(line):
     'person_name' and 'topic' are present in the JSON object returned by the model.
     """
     
-    system_prompt = "Use JSON format to extract person_name and topic. Extract the pearson name and the topic. If you can not decide on the name, return 'John Doe'. Use the Serbian language "
+    system_prompt = result1.get('prompt_text', 'You are helpful assistant that always writes in Sebian.')
     
     response = client.chat.completions.create(
                         model="gpt-4-turbo-preview",
@@ -101,7 +105,7 @@ def add_question(chunk_text):
         messages=[
             {
                 "role": "system",
-                "content": "[Use only Serbian language] You are a top interviewer. Create a question that will best match given statement and get the most similar content as the input if asked."
+                "content": result2.get('prompt_text', 'You are helpful assistant that always writes in Sebian.')
             },
             {
                 "role": "user",
