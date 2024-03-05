@@ -88,45 +88,45 @@ def scrape(url: str):
     return {"url": url, "text": main_content_text}, local_links
 
 # Ne koristi se, zastarelo...
-# def add_schema_data(line):
-#     openai_api_key = os.getenv("OPENAI_API_KEY")
+def add_schema_data(line):
+    openai_api_key = os.getenv("OPENAI_API_KEY")
 
-#     # Create an instance of ChatOpenAI
-#     llm = ChatOpenAI(temperature=0, model="gpt-4-turbo-preview", openai_api_key=openai_api_key)
+    # Create an instance of ChatOpenAI
+    llm = ChatOpenAI(temperature=0, model="gpt-4-turbo-preview", openai_api_key=openai_api_key)
 
-#     # mogu da se definisu bilo koji delovi kao JSON schema
+    # mogu da se definisu bilo koji delovi kao JSON schema
 
-#     schema = {
-#         "properties": {
-#             "title": {"type": "string"},
-#             "keyword": {"type": "string"},
-#         },
-#         "required": ["title", "keyword"],
-#     }
+    schema = {
+        "properties": {
+            "title": {"type": "string"},
+            "keyword": {"type": "string"},
+        },
+        "required": ["title", "keyword"],
+    }
 
-#     # moze da se ucita bilo koji fajl (ili dokument ili scrapeovan websajt recimo) kao txt ili json
-#     # chunking treba raditi bez overlapa
-#     # moze da se razdvoji title i keyword u jedan index,
-#     # title i text u drugi index, onda imamo i duzi i kraci index
+    # moze da se ucita bilo koji fajl (ili dokument ili scrapeovan websajt recimo) kao txt ili json
+    # chunking treba raditi bez overlapa
+    # moze da se razdvoji title i keyword u jedan index,
+    # title i text u drugi index, onda imamo i duzi i kraci index
 
-#     chain = create_extraction_chain(schema, llm)
-#     result = chain.invoke(line)
-#     for item in result:
-#         title = item["title"]
-#         keyword = item["keyword"]
+    chain = create_extraction_chain(schema, llm)
+    result = chain.invoke({line})["output"]
+    for item in result:
+        title = item["title"]
+        keyword = item["keyword"]
 
-#         # ovo treba da postane jedan chunk, na koji se daodaju metadata i onda upsertuje u index
-#         # prakticno umesto prefix-a tj ovo je dinamicki prefix
-#         # if title and keyword and text:
-#         # st.write(f"{title}: keyword: {keyword} ->  {text}\n")
-#         added_schema_data = f"Title: {title} <- Keyword: {keyword} -> Text: {line}"
-#         return added_schema_data
-#     # else:
-#     #     st.write("No title or keyword or text")
+        # ovo treba da postane jedan chunk, na koji se daodaju metadata i onda upsertuje u index
+        # prakticno umesto prefix-a tj ovo je dinamicki prefix
+        # if title and keyword and text:
+        # st.write(f"{title}: keyword: {keyword} ->  {text}\n")
+        added_schema_data = f"Title: {title} <- Keyword: {keyword} -> Text: {line}"
+        return added_schema_data
+    # else:
+    #     st.write("No title or keyword or text")
 
 
-# # na kraju se upsertuje u index svaka linija
-# # opciono moze da se ponovo sacuja u txt ili json fajl
+# na kraju se upsertuje u index svaka linija
+# opciono moze da se ponovo sacuja u txt ili json fajl
 
 
 # Define a function to scrape a given URL
