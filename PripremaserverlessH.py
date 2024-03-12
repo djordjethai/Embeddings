@@ -28,10 +28,14 @@ from pinecone import Pinecone
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain_experimental.text_splitter import SemanticChunker
 
-from myfunc.retrievers import PromptDatabase
-with PromptDatabase() as db:
-    result1 = db.query_sql_record("ADD_SELF_DATA")
-    result2 = db.query_sql_record("MULTI_H_QA_SYSTEM")
+
+if "init_prompts" not in st.session_state:
+    st.session_state.init_prompts = True
+    from myfunc.retrievers import PromptDatabase
+    with PromptDatabase() as db:
+        prompt_map = db.get_prompts_by_names(["result1", "result2"],["ADD_SELF_DATA", "MULTI_H_QA_SYSTEM"])
+        result1 = prompt_map.get("result1", "You are helpful assistant that always writes in Sebian.")
+        result2 = prompt_map.get("result2", "You are helpful assistant that always writes in Sebian.")
 
 st_style()
 index_name="neo-positive"
@@ -61,8 +65,6 @@ def add_self_data(line):
     'person_name' and 'topic' are present in the JSON object returned by the model.
     """
     
-    system_prompt = result1.get('prompt_text', 'You are helpful assistant that always writes in Sebian.')
-    
     response = client.chat.completions.create(
                         model="gpt-4-turbo-preview",
                         temperature=0,
@@ -70,7 +72,7 @@ def add_self_data(line):
                         messages=[
                             {
                                 "role": "system",
-                                "content": system_prompt
+                                "content": result1
                             },
                             {
                                 "role": "user",
@@ -105,7 +107,7 @@ def add_question(chunk_text):
         messages=[
             {
                 "role": "system",
-                "content": result2.get('prompt_text', 'You are helpful assistant that always writes in Sebian.')
+                "content": result2
             },
             {
                 "role": "user",
