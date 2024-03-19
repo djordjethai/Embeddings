@@ -34,8 +34,8 @@ if "init_prompts" not in st.session_state:
     from myfunc.retrievers import PromptDatabase
     with PromptDatabase() as db:
         prompt_map = db.get_prompts_by_names(["result1", "result2"],["ADD_SELF_DATA", "MULTI_H_QA_SYSTEM"])
-        result1 = prompt_map.get("result1", "You are helpful assistant that always writes in Sebian.")
-        result2 = prompt_map.get("result2", "You are helpful assistant that always writes in Sebian.")
+        st.session_state.result1 = prompt_map.get("result1", "You are helpful assistant that always writes in Sebian.")
+        st.session_state.result2 = prompt_map.get("result2", "You are helpful assistant that always writes in Sebian.")
 
 st_style()
 index_name="neo-positive"
@@ -72,7 +72,7 @@ def add_self_data(line):
                         messages=[
                             {
                                 "role": "system",
-                                "content": result1
+                                "content": st.session_state.result1
                             },
                             {
                                 "role": "user",
@@ -107,7 +107,7 @@ def add_question(chunk_text):
         messages=[
             {
                 "role": "system",
-                "content": result2
+                "content": st.session_state.result2
             },
             {
                 "role": "user",
