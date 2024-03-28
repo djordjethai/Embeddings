@@ -7,15 +7,14 @@ from myfunc.mojafunkcija import (
     show_logo,
     def_chunk,
 )
+from myfunc.prompts import PromptDatabase
+from myfunc.embeddings import prepare_embeddings, do_embeddings
 from myfunc.retrievers import PineconeUtility
-from myfunc.various_tools import do_embeddings, prepare_embeddings, main_scraper
+from myfunc.various_tools import main_scraper
 from pinecone import Pinecone
-
-st.set_page_config(page_title="Embeddings", page_icon="📔", layout="wide")
 
 if "init_prompts" not in st.session_state:
     st.session_state.init_prompts = True
-    from myfunc.retrievers import PromptDatabase
     with PromptDatabase() as db:
         prompt_map = db.get_prompts_by_names(["system_prompt_add_self", "system_prompt_add_q"],[os.getenv("ADD_SELF_DATA"), os.getenv("MULTI_H_QA_SYSTEM")])
         st.session_state.system_prompt_add_self = prompt_map.get("system_prompt_add_self", "You are helpful assistant that always writes in Sebian.")
