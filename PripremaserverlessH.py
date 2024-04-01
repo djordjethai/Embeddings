@@ -16,9 +16,9 @@ from pinecone import Pinecone
 if "init_prompts" not in st.session_state:
     st.session_state.init_prompts = True
     with PromptDatabase() as db:
-        prompt_map = db.get_prompts_by_names(["system_prompt_add_self", "system_prompt_add_q"],[os.getenv("ADD_SELF_DATA"), os.getenv("MULTI_H_QA_SYSTEM")])
-        st.session_state.system_prompt_add_self = prompt_map.get("system_prompt_add_self", "You are helpful assistant that always writes in Sebian.")
-        st.session_state.system_prompt_add_q = prompt_map.get("system_prompt_add_q", "You are helpful assistant that always writes in Sebian.")
+        prompt_map = db.get_prompts_by_names(["add_self_data", "question_from_answer"],[os.getenv("ADD_SELF_DATA"), os.getenv("QUESTION_FROM_ANSWER")])
+        st.session_state.add_self_data = prompt_map.get("add_self_data", "You are helpful assistant that always writes in Sebian.")
+        st.session_state.question_from_answer = prompt_map.get("question_from_answer", "You are helpful assistant that always writes in Sebian.")
 
 st_style()
 index_name="neo-positive"
