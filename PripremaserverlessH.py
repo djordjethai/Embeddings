@@ -14,7 +14,7 @@ from myfunc.various_tools import main_scraper
 from pinecone import Pinecone
 
 if "init_prompts" not in st.session_state:
-    st.session_state.init_prompts = True
+    st.session_state.init_prompts = 42
     with PromptDatabase() as db:
         prompt_map = db.get_prompts_by_names(["add_self_data", "question_from_answer"],[os.getenv("ADD_SELF_DATA"), os.getenv("QUESTION_FROM_ANSWER")])
         st.session_state.add_self_data = prompt_map.get("add_self_data", "You are helpful assistant that always writes in Sebian.")
@@ -172,7 +172,7 @@ Pre prelaska na sledeću fazu OBAVEZNO uploadujte i pregledajte izlazni dokument
 
     if st.session_state.nesto == 1:
         with phmain.container():
-            if dokum is not None: 
+            if dokum is not None:
                 prepare_embeddings(chunk_size, chunk_overlap, dokum)
             else:
                 st.error("Uploadujte dokument")
