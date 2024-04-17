@@ -25,7 +25,7 @@ index_name="neo-positive"
 #api_key = os.environ.get("PINECONE_API_KEY")
 host = os.environ.get("PINECONE_HOST")
 client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
-version = "25.03.24"
+version = "03.04.24"
 
 
 def main():
@@ -36,7 +36,7 @@ def main():
         f"<p style='font-size: 10px; color: grey;'>{version}</p>",
         unsafe_allow_html=True,
     )
-    st.subheader("Embedings - Hybrid (neo-positive) i Semantic (embedings1)")
+    st.subheader("Embedings Hybrid i Semantic i priprema sa h2")
     st.caption("Odaberite operaciju")
     with st.expander("Pročitajte uputstvo:"):
         st.caption(
