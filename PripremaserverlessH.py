@@ -13,8 +13,9 @@ from myfunc.retrievers import PineconeUtility
 from myfunc.various_tools import main_scraper
 from pinecone import Pinecone
 
-if "init_prompts" not in st.session_state:
-    st.session_state.init_prompts = 42
+try:
+    x = st.session_state.question_from_answer
+except:
     with PromptDatabase() as db:
         prompt_map = db.get_prompts_by_names(["add_self_data", "question_from_answer"],[os.getenv("ADD_SELF_DATA"), os.getenv("QUESTION_FROM_ANSWER")])
         st.session_state.add_self_data = prompt_map.get("add_self_data", "You are helpful assistant that always writes in Sebian.")
