@@ -25,7 +25,7 @@ index_name="neo-positive"
 #api_key = os.environ.get("PINECONE_API_KEY")
 host = os.environ.get("PINECONE_HOST")
 client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
-version = "03.04.24"
+version = "06.05.24"
 
 
 def main():
@@ -55,8 +55,9 @@ Ovo uputstvo je namenjeno korisnicima koji žele da koriste aplikaciju za kreira
 ***Ako ostavite polje prazno, default delimiter je novi paragraf***
 3b. Opciono definišite prefikks koji ce biti dodat na pocetak teksta.
 3c. Za Self_query model ce definisati dodatne meta podatke person name i topic.
-3d. Mozete naloziti modelu da definise pitanje za svaki tekst. Pitanje se dodaje polse prefiksa a pre teksta.
+3d. Mozete naloziti modelu da definise pitanje za svaki tekst. Pitanje se dodaje posle prefiksa a pre teksta.
 3e. Mozete zatraziti Semantic chunking dokumenta, podelu i spajanje pasusa prema znacenju. U tom slucaju velicina chunka i overlap nisu u upotrebi
+3f. Mozete zatraziti Heading chunking dokumenta, podelu i spajanje pasusa prema H2 headingu. U tom slucaju velicina chunka i overlap nisu u upotrebi
 
 Duzina chunka i overlap se mogu podesavati po potrebi. Generalno, ako vam j edokument vec struktuiran po paragrafima mozete korstiti vema male duzine (50) a podela ce se izvrsiti na prvom paragrafu. 
 Default duzina chunka je 1500 karaktera. Testirajte koji vam parametri najvise odgovaraju za odredjeni tip teksta.
@@ -119,7 +120,7 @@ Pre prelaska na sledeću fazu OBAVEZNO uploadujte i pregledajte izlazni dokument
         st.subheader("Učitajte dokument za pripremu Pinecone Indeksa")
 
         dokum = st.file_uploader(
-            "Izaberite dokument/e", key="upload_file", type=["txt", "pdf", "docx", "JSON"]
+            "Izaberite dokument/e", key="upload_file", type=["txt", "pdf", "docx", "JSON", "py"]
         )
     with col1:
         with st.form(key="podeli", clear_on_submit=False):
@@ -201,7 +202,8 @@ Pre prelaska na sledeću fazu OBAVEZNO uploadujte i pregledajte izlazni dokument
                 st.error("Uploadujte JSON dokument")
     elif st.session_state.nesto == 3:
         with phmain.container():
-            PineconeUtility.obrisi_index()
+            pc=PineconeUtility()
+            pc.obrisi_index()
     
     elif st.session_state.nesto == 5:
         with phmain.container():
