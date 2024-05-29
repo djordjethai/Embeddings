@@ -6,33 +6,41 @@ from myfunc.mojafunkcija import (
     positive_login,
     show_logo,
     def_chunk,
+    initialize_session_state,
 )
-from myfunc.prompts import PromptDatabase
+from myfunc.prompts import get_prompts
 from myfunc.embeddings import prepare_embeddings, do_embeddings
 from myfunc.retrievers import PineconeUtility
 from myfunc.various_tools import main_scraper
 from pinecone import Pinecone
 
-try:
-    x = st.session_state.question_from_answer
-except:
-    with PromptDatabase() as db:
-        prompt_map = db.get_prompts_by_names(["add_self_data", "question_from_answer"],[os.getenv("ADD_SELF_DATA"), os.getenv("QUESTION_FROM_ANSWER")])
-        st.session_state.add_self_data = prompt_map.get("add_self_data", "You are helpful assistant that always writes in Sebian.")
-        st.session_state.question_from_answer = prompt_map.get("question_from_answer", "You are helpful assistant that always writes in Sebian.")
+default_values = {
+    "dd_self_data" : "You are a helpful assistant",
+    "question_from_answer" : "You are a helpful assistant",
+    "podeli_button": False,
+    "manage_button": False,
+    "kreiraj_button": False,
+    "stats_button": False,
+    "screp_button": False,
+    "submit_b": False,
+    "submit_b2": False,
+    "nesto": 0,
+}
+initialize_session_state(default_values)
+
+if st.session_state.dd_self_data == "You are a helpful assistant":
+    get_prompts("dd_self_data", "question_from_answer")
 
 st_style()
 index_name="neo-positive"
-#api_key = os.environ.get("PINECONE_API_KEY")
 host = os.environ.get("PINECONE_HOST")
 client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
-version = "06.05.24"
-
+version = "29.05.24"
 
 def main():
     show_logo()
     chunk_size, chunk_overlap = def_chunk()
-    #chunk_size = 50
+    # chunk_size = 50
     st.markdown(
         f"<p style='font-size: 10px; color: grey;'>{version}</p>",
         unsafe_allow_html=True,
@@ -96,25 +104,6 @@ Pre prelaska na sledeću fazu OBAVEZNO uploadujte i pregledajte izlazni dokument
                    """
         )
     st.caption("Odaberite operaciju")
-    if "podeli_button" not in st.session_state:
-        st.session_state["podeli_button"] = False
-    if "manage_button" not in st.session_state:
-        st.session_state["manage_button"] = False
-    if "kreiraj_button" not in st.session_state:
-        st.session_state["kreiraj_button"] = False
-    if "stats_button" not in st.session_state:
-        st.session_state["stats_button"] = False
-    if "screp_button" not in st.session_state:
-        st.session_state["screp_button"] = False
-
-    if "submit_b" not in st.session_state:
-        st.session_state["submit_b"] = False
-
-    if "submit_b2" not in st.session_state:
-        st.session_state["submit_b2"] = False
-
-    if "nesto" not in st.session_state:
-        st.session_state["nesto"] = 0
 
     col1, col2, col3, col4, col5 = st.columns(5)
     with st.sidebar:
