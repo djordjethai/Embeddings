@@ -1,18 +1,14 @@
-import streamlit as st
-from openai import OpenAI
 import os
-from myfunc.mojafunkcija import (
-    st_style,
-    positive_login,
-    show_logo,
-    def_chunk,
-    initialize_session_state,
-)
+import streamlit as st
+
+from openai import OpenAI
+from pinecone import Pinecone
+
+from myfunc.embeddings import do_embeddings, prepare_embeddings
+from myfunc.mojafunkcija import def_chunk, initialize_session_state, positive_login, show_logo, st_style
 from myfunc.prompts import get_prompts
-from myfunc.embeddings import prepare_embeddings, do_embeddings
 from myfunc.retrievers import PineconeUtility
 from myfunc.various_tools import main_scraper
-from pinecone import Pinecone
 
 default_values = {
     "dd_self_data" : "You are a helpful assistant",
