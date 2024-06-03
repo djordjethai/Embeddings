@@ -2,7 +2,7 @@
 
 from tqdm.auto import tqdm
 from uuid import uuid4
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 import os
 import re
 import html

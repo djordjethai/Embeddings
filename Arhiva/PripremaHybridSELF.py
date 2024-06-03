@@ -2,7 +2,7 @@ import streamlit as st
 
 st.set_page_config(page_title="Embeddings", page_icon="📔", layout="wide")
 from pinecone import Pinecone
-from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain_community.embeddings import OpenAIEmbeddings
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_community.document_loaders import UnstructuredFileLoader
 import os
