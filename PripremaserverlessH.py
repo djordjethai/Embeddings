@@ -31,7 +31,7 @@ st_style()
 index_name="neo-positive"
 host = os.environ.get("PINECONE_HOST")
 client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
-version = "29.05.24"
+version = "03.06.24"
 
 def main():
     show_logo()
