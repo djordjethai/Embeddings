@@ -106,7 +106,7 @@ Pre prelaska na sledeću fazu OBAVEZNO uploadujte i pregledajte izlazni dokument
         st.subheader("Učitajte dokument za pripremu Pinecone Indeksa")
 
         dokum = st.file_uploader(
-            "Izaberite dokument/e", key="upload_file", type=["txt", "pdf", "docx", "JSON", "py"]
+            "Izaberite dokument/e", key="upload_file", type=["txt", "pdf", "docx", "JSON", "py", "CSV"]
         )
     with col1:
         with st.form(key="podeli", clear_on_submit=False):
