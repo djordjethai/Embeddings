@@ -13,3 +13,5 @@
 slnx.sqlite
 *.JSONL
 *.gml
+!Embeddings.txt
+/venv
