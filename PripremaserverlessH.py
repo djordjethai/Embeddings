@@ -6,13 +6,13 @@ from pinecone import Pinecone
 
 from myfunc.embeddings import do_embeddings, prepare_embeddings
 from myfunc.mojafunkcija import def_chunk, initialize_session_state, positive_login, show_logo, st_style
-from myfunc.prompts import get_prompts
 from myfunc.retrievers import PineconeUtility
 from myfunc.various_tools import main_scraper
+from myfunc.varvars_dicts import work_promtps
+
+mprompts = work_promtps()
 
 default_values = {
-    "dd_self_data" : "You are a helpful assistant",
-    "question_from_answer" : "You are a helpful assistant",
     "podeli_button": False,
     "manage_button": False,
     "kreiraj_button": False,
@@ -23,9 +23,6 @@ default_values = {
     "nesto": 0,
 }
 initialize_session_state(default_values)
-
-if st.session_state.dd_self_data == "You are a helpful assistant":
-    get_prompts("dd_self_data", "question_from_answer")
 
 st_style()
 index_name="neo-positive"
