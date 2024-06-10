@@ -8,9 +8,6 @@ from myfunc.embeddings import do_embeddings, prepare_embeddings
 from myfunc.mojafunkcija import def_chunk, initialize_session_state, positive_login, show_logo, st_style
 from myfunc.retrievers import PineconeUtility
 from myfunc.various_tools import main_scraper
-from myfunc.varvars_dicts import work_promtps
-
-mprompts = work_promtps()
 
 default_values = {
     "podeli_button": False,
