@@ -1,4 +1,6 @@
 myfunc @ git+https://github.com/djordjethai/myfunc.git
-openai==1.32.0
-pinecone==4.0.0
-streamlit==1.35.0
+openai==1.35.7
+pinecone==4.1.1
+streamlit==1.36.0
+unstructured
+psutil

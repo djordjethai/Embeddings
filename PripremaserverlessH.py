@@ -25,7 +25,7 @@ st_style()
 index_name="neo-positive"
 host = os.environ.get("PINECONE_HOST")
 client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
-version = "03.06.24"
+version = "15.07.24"
 
 def main():
     show_logo()
@@ -160,19 +160,19 @@ Pre prelaska na sledeću fazu OBAVEZNO uploadujte i pregledajte izlazni dokument
     elif st.session_state.nesto == 2:
         with phmain.container():
             if dokum is not None: 
-                index_name = st.selectbox("Odaberite index", ["neo-positive", "embedings1"], help="Unesite ime indeksa", key="opcije"
+                index_name = st.selectbox("Odaberite index", ["neo-positive", "delfi"], help="Unesite ime indeksa", key="opcije"
                 )
                 if index_name is not None and index_name!=" " and index_name !="" :
                                             
-                        if index_name=="embedings1":
+                        if index_name=="delfi":
         
-                            pinecone=Pinecone(api_key=os.environ.get("PINECONE_API_KEY_STARI"), host="https://embedings1-b1b39e1.svc.us-west1-gcp.pinecone.io") #embedings1 (thai, free)
-                            index = pinecone.Index(host="https://embedings1-b1b39e1.svc.us-west1-gcp.pinecone.io") #embedings1
-                            do_embeddings(dokum, "semantic", os.environ.get("PINECONE_API_KEY_STARI"), host="https://embedings1-b1b39e1.svc.us-west1-gcp.pinecone.io", index_name=index_name, index=index)
+                            pinecone=Pinecone(api_key=os.environ.get("PINECONE_API_KEY_S"), host="https://delfi-a9w1e6k.svc.aped-4627-b74a.pinecone.io") #embedings1 (thai, free)
+                            index = pinecone.Index(host="https://embedings1-b1b39e1.svc.us-west1-gcp.pinecone.io") #delfi semantic
+                            do_embeddings(dokum, "semantic", os.environ.get("PINECONE_API_KEY_S"), host="https://delfi-a9w1e6k.svc.aped-4627-b74a.pinecone.io", index_name=index_name, index=index)
                         elif index_name=="neo-positive":
         
                             pinecone=Pinecone(api_key=os.environ.get("PINECONE_API_KEY_S"), host="https://neo-positive-a9w1e6k.svc.apw5-4e34-81fa.pinecone.io") #neo-positive (thai, serverless, 3072)
-                            index = pinecone.Index(host="https://neo-positive-a9w1e6k.svc.apw5-4e34-81fa.pinecone.io") #neo-positive
+                            index = pinecone.Index(host="https://neo-positive-a9w1e6k.svc.apw5-4e34-81fa.pinecone.io") #neo-positive hybrid
                             do_embeddings(dokum=dokum, tip="hybrid", api_key=os.environ.get("PINECONE_API_KEY_S"), host="https://neo-positive-a9w1e6k.svc.apw5-4e34-81fa.pinecone.io", index_name=index_name, index=index )
                             
                         else:
